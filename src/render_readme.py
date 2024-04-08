@@ -122,7 +122,7 @@ def main():
     stats = _balance_long_df(fn_stats(df))
 
     # stats n months
-    # stats_15d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=15))]))
+    stats_15d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=15))]))
     stats_30d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=30))]))
     stats_60d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=60))]))
     stats_90d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=90))]))
@@ -149,7 +149,7 @@ predicted corrected:
 ## stats 6/55 all time
 {stats.to_markdown(index=False)}
 ## stats 6/55 -15d
-{stats_30d.to_markdown(index=False)}
+{stats_15d.to_markdown(index=False)}
 ## stats 6/55 -30d
 {stats_30d.to_markdown(index=False)}
 ## stats 6/55 -60d

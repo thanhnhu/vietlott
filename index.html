@@ -5,12 +5,35 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Vietlott data</title>
+    <title>Vietlott</title>
 
     <div id="table"></div>
 
     <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
     <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+
+    <style>
+    .row {
+        width: 100%;
+        display: inline-flex;
+    }
+    
+    .width100 {
+        width: 100%;
+        padding: 0 1rem 0 1rem;
+    }
+    
+    .width20 {
+        width: 20%;
+        padding: 0 1rem 0 1rem;
+    }
+
+    table {
+        width: 100%;
+        border: 1px skyblue;
+    }
+    </style>
+
 </head>
 
 <body>
@@ -40,7 +63,7 @@
             )
             stats['%'] = (stats['count'] / len(df_explode) * 100).round(2)
             return stats
-        
+
         stats = fn_stats(data_655)
 
         # stats n months
@@ -49,6 +72,7 @@
         stats_60d = fn_stats(data_655, 60)
         stats_90d = fn_stats(data_655, 90)
         
+        display(data_655.head(10), target='detail_top_10')
         display(stats, target='stats_all_time')
         display(stats_15d, target='stats_15d')
         display(stats_30d, target='stats_30d')
@@ -61,24 +85,31 @@
         data_655
     </py-repl>
 
-    <div style="width: 100%; display: inline-flex">
-        <div style="width:20%">
+    <div class="row">
+        <div class="width100">
+            <h1>Detail top 10</h1>
+            <div id="detail_top_10"></div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="width20">
             <h1>All time</h1>
             <div id="stats_all_time"></div>
         </div>
-        <div style="width:20%">
+        <div class="width20">
             <h1>15d</h1>
             <div id="stats_15d"></div>
         </div>
-        <div style="width:20%">
+        <div class="width20">
             <h1>30d</h1>
             <div id="stats_30d"></div>
         </div>
-        <div style="width:20%">
+        <div class="width20">
             <h1>60d</h1>
             <div id="stats_60d"></div>
         </div>
-        <div style="width:20%">
+        <div class="width20">
             <h1>90d</h1>
             <div id="stats_90d"></div>
         </div>
