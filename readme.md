@@ -138,6 +138,17 @@ predicted corrected:
 
 # Install
  
+```shell
+# pip install pipenv
+# add PATH C:\Users\win\.pyenv\pyenv-win\versions\3.9.1\Scripts\
+$ pipenv install --dev
+$ pipenv shell
+$ pip install -r requirements.txt
+# python src/vietlott/cli/crawl.py power_655
+# python src/vietlott/cli/missing.py power_655
+$ python src/render_readme.py
+```
+ 
 ## via pip
 
 ```shell
