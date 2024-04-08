@@ -4,7 +4,7 @@
 URL=https://github.com/thanhnhu/vietlott.git
 FOLDER=vietlott
 DATA_FOLDER=data
-USER="thanhnhu"
+USER="thanhnhudn"
 EMAIl="thanhnhudn@gmail.com"
 
 # generate data file
