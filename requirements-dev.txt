@@ -97,3 +97,5 @@ urllib3==2.2.1
     #   twine
 zipp==3.18.1
     # via importlib-metadata
+scikit-learn==1.4.1.post1
+openpyxl==3.1.2

@@ -64,3 +64,5 @@ tzdata==2024.1
     #   pendulum
 urllib3==2.2.1
     # via requests
+scikit-learn==1.4.1.post1
+openpyxl==3.1.2
