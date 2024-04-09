@@ -4,9 +4,8 @@ These are backtest results for the strategies I have developed
 ### random
 predicted: 20 / day (20 tickets perday or 200,000 vnd)
 predicted corrected:
-|       | date       | result                    | predicted              |
-|------:|:-----------|:--------------------------|:-----------------------|
-| 18595 | 2018-02-24 | [5, 7, 24, 32, 45, 49, 1] | [51, 32, 49, 1, 45, 7] | 
+| date   | result   | predicted   |
+|--------|----------|-------------| 
 
 ## raw details 6/55
 | date       |    id | result                       |   page | process_time               |
@@ -140,13 +139,10 @@ predicted corrected:
 # Install
  
 ```shell
-# pip install pipenv
-# add PATH C:\Users\win\.pyenv\pyenv-win\versions\3.9.1\Scripts\
-$ pipenv install --dev
-$ pipenv shell
+# add PATH C:\Users\win\.pyenv\pyenv-win\versions\3.11.4\Scripts\
 $ pip install -r requirements.txt
-# python src/vietlott/cli/crawl.py power_655
-# python src/vietlott/cli/missing.py power_655
+$ python src/vietlott/cli/crawl.py power_655
+$ python src/vietlott/cli/missing.py power_655
 $ python src/render_readme.py
 ```
  
