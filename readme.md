@@ -2,10 +2,20 @@
 ## Predictions (just for testing, not a financial advice)
 These are backtest results for the strategies I have developed
 ### random
-predicted: 20 / day (20 tickets perday or 200,000 vnd)
+predicted: 10 / day (10 tickets perday or 100,000 vnd)
 predicted corrected:
-| date   | result   | predicted   |
-|--------|----------|-------------| 
+|    |   0 |   1 |   2 |   3 |   4 |   5 |
+|---:|----:|----:|----:|----:|----:|----:|
+|  0 |  10 |  18 |  25 |  28 |  31 |  35 |
+|  1 |  10 |  18 |  22 |  25 |  37 |  42 |
+|  2 |  10 |  26 |  29 |  31 |  35 |  41 |
+|  3 |  11 |  20 |  24 |  45 |  49 |  52 |
+|  4 |  10 |  28 |  34 |  41 |  44 |  49 |
+|  5 |  10 |  25 |  30 |  39 |  42 |  47 |
+|  6 |  11 |  19 |  31 |  35 |  43 |  47 |
+|  7 |  10 |  19 |  23 |  29 |  34 |  52 |
+|  8 |  11 |  20 |  23 |  37 |  47 |  50 |
+|  9 |  10 |  25 |  29 |  31 |  35 |  41 | 
 
 ## raw details 6/55
 | date       |    id | result                       |   page | process_time               |

@@ -8,6 +8,7 @@ from loguru import logger
 
 from vietlott.config.products import get_config
 from vietlott.model.strategy.random import RandomModel
+from vietlott.predictor.predictor import Predictor
 
 include_install_section = """# Install
  
@@ -125,17 +126,20 @@ def main():
     stats_90d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=90))]))
 
     # predictions
-    ticket_per_days = 20
-    random_model = RandomModel(df, ticket_per_days)
-    random_model.backtest()
-    random_model.evaluate()
-    df_random_correct = random_model.df_backtest_evaluate[random_model.df_backtest_evaluate["correct_num"] >= 5][
-        ["date", "result", "predicted"]
-    ]
+    ticket_per_days = 10
+    # random_model = RandomModel(df, ticket_per_days)
+    # random_model.backtest()
+    # random_model.evaluate()
+    # df_random_correct = random_model.df_backtest_evaluate[random_model.df_backtest_evaluate["correct_num"] >= 5][
+    #     ["date", "result", "predicted"]
+    # ]
+    data = df.sort_values(by=["date", "id"], ascending=True)
+    data = data["result"]
+    data = pd.DataFrame(data.values.tolist(), columns= ["num_%d" % (i+1) for i in range(7)])
+    df_random_correct = Predictor().predict(data, ticket_per_days)
 
     output_str = f"""# Vietlot data
 ## Predictions (just for testing, not a financial advice)
-These are backtest results for the strategies I have developed
 ### random
 predicted: {ticket_per_days} / day ({ticket_per_days} tickets perday or {10000 * ticket_per_days:,d} vnd)
 predicted corrected:
