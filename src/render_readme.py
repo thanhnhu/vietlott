@@ -140,10 +140,8 @@ def main():
 
     output_str = f"""# Vietlot data
 ## Predictions (just for testing, not a financial advice)
-### random
-predicted: {ticket_per_days} / day ({ticket_per_days} tickets perday or {10000 * ticket_per_days:,d} vnd)
-predicted corrected:
-{df_random_correct.to_markdown()} 
+### random 10 tickets
+{df_random_correct.to_markdown(index=False)}
 
 ## raw details 6/55
 {df.head(10).to_markdown(index=False)}
