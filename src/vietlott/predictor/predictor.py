@@ -22,10 +22,6 @@ class Predictor():
         #data.fillna(0, inplace=True)
         #print(data.head(10))
 
-        # Generate a new set of random features for prediction
-        new_ticket = self.fn_random_ticket(df, 10)
-        new_data = pd.DataFrame(new_ticket.values.tolist(), columns= ["num_%d" % (i+1) for i in range(6)])
-
         res = []
         i = 0
         while i < number_of_ticket:
@@ -47,6 +43,8 @@ class Predictor():
             #     "num_5": [randint(5, 54) for _ in range(100)],
             #     "num_6": [randint(6, 55) for _ in range(100)],
             # })
+            new_ticket = self.fn_random_ticket(df, 1)
+            new_data = pd.DataFrame(new_ticket.values.tolist(), columns= ["num_%d" % (i+1) for i in range(6)])
 
             # Use the trained model to predict the next 6 numbers for each set of features
             predictions = model.predict(new_data)
@@ -143,7 +141,7 @@ class Predictor():
 if __name__ == "__main__":
     # Load the data from json file
     df = pd.read_json(get_config("power_655").raw_path, lines=True, dtype=object, convert_dates=False)
-    predict = Predictor().predict(df, 1)
+    predict = Predictor().predict(df, 10)
     #random_ticket = Predictor().fn_random_ticket(df, 10)
     #print(type(predict))
     #print(predict)

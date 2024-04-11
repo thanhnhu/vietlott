@@ -126,7 +126,7 @@ def main():
     stats_90d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=90))]))
 
     # predictions
-    ticket_per_days = 1
+    ticket_per_days = 10
     # random_model = RandomModel(df, ticket_per_days)
     # random_model.backtest()
     # random_model.evaluate()
