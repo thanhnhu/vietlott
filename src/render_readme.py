@@ -126,17 +126,14 @@ def main():
     stats_90d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=90))]))
 
     # predictions
-    ticket_per_days = 10
+    ticket_per_days = 1
     # random_model = RandomModel(df, ticket_per_days)
     # random_model.backtest()
     # random_model.evaluate()
     # df_random_correct = random_model.df_backtest_evaluate[random_model.df_backtest_evaluate["correct_num"] >= 5][
     #     ["date", "result", "predicted"]
     # ]
-    data = df.sort_values(by=["date", "id"], ascending=True)
-    data = data["result"]
-    data = pd.DataFrame(data.values.tolist(), columns= ["num_%d" % (i+1) for i in range(7)])
-    df_random_correct = Predictor().predict(data, ticket_per_days)
+    df_random_correct = Predictor().predict(df, ticket_per_days)
 
     output_str = f"""# Vietlot data
 ## Predictions (just for testing, not a financial advice)

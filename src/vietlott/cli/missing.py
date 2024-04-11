@@ -5,6 +5,8 @@ import pandas as pd
 import pendulum
 from loguru import logger
 
+import os, sys
+sys.path.append(os.path.dirname(os.path.abspath('src/vietlott')))
 from vietlott.config.products import product_config_map, ProductConfig
 from vietlott.crawler.products import BaseProduct, ProductPower655, ProductPower645, ProductKeno
 
