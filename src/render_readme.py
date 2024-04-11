@@ -18,6 +18,7 @@ $ pip install -r requirements.txt
 $ python src/vietlott/cli/crawl.py power_655
 $ python src/vietlott/cli/missing.py power_655
 $ python src/render_readme.py
+$ python src/vietlott/predictor/predictor.py
 ```
  
 ## via pip
@@ -117,13 +118,13 @@ def main():
         stats["%"] = (stats["count"] / len(df_explode) * 100).round(2)
         return stats
 
-    stats = _balance_long_df(fn_stats(df))
+    #stats = _balance_long_df(fn_stats(df))
 
     # stats n months
-    stats_15d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=15))]))
-    stats_30d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=30))]))
-    stats_60d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=60))]))
-    stats_90d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=90))]))
+    #stats_15d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=15))]))
+    #stats_30d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=30))]))
+    #stats_60d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=60))]))
+    #stats_90d = _balance_long_df(fn_stats(df[df["date"] >= (datetime.now().date() - timedelta(days=90))]))
 
     # predictions
     ticket_per_days = 10
@@ -135,6 +136,7 @@ def main():
     # ]
     df_random_correct = Predictor().predict(df, ticket_per_days)
 
+    #{stats.to_markdown(index=False)}
     output_str = f"""# Vietlot data
 ## Predictions (just for testing, not a financial advice)
 ### random 10 tickets
@@ -143,15 +145,10 @@ def main():
 ## raw details 6/55
 {df.head(10).to_markdown(index=False)}
 ## stats 6/55 all time
-{stats.to_markdown(index=False)}
 ## stats 6/55 -15d
-{stats_15d.to_markdown(index=False)}
 ## stats 6/55 -30d
-{stats_30d.to_markdown(index=False)}
 ## stats 6/55 -60d
-{stats_60d.to_markdown(index=False)}
 ## stats 6/55 -90d
-{stats_90d.to_markdown(index=False)}
 
 {include_install_section}
 """
