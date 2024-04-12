@@ -137,6 +137,8 @@ def main():
     #     ["date", "result", "predicted"]
     # ]
     df_random_correct = Predictor().predict(df, ticket_per_days)
+    df_random_tickets = pd.DataFrame({'#': range(1, len(df_random_tickets) + 1),
+                                      'Tickets': df_random_tickets.values.tolist()})
 
     #{stats.to_markdown(index=False)}
     output_str = f"""# Vietlot data
