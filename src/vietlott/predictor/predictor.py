@@ -16,14 +16,13 @@ from vietlott.config.products import get_config
 class Predictor():
     def predict(self, df, number_of_ticket, time_id = None):
         if(time_id is not None):
-            df = df[df.id <= time_id]
+            df = df[df.id < time_id].copy(deep=True)
 
         df["date"] = pd.to_datetime(df["date"]).dt.date
         data = df.sort_values(by=["date", "id"], ascending=True)
         #print(data.head(10))
         data = data["result"]
         data = pd.DataFrame(data.values.tolist(), columns= ["num_%d" % (i+1) for i in range(7)])
-        #print(data.head(10))
 
         res = []
         i = 0
@@ -61,11 +60,11 @@ class Predictor():
             # Group by the same first number & count
             rows, count = np.unique(arr_first_number, return_counts = True)
             
-            # Select rows have max count first number
+            # Select rows prioritize have count of first number = 2, it will happen again
             repeated = []
             for p in predictions:
-                y = rows[count == count.max()]
-                if(y[0] == p[0]):
+                y = rows[count == 2]
+                if(y.size != 0 and y[0] == p[0]):
                     repeated.append(p)
 
             check_column = 0
@@ -156,8 +155,8 @@ class Predictor():
 if __name__ == "__main__":
     # Load the data from json file
     df = pd.read_json(get_config("power_655").raw_path, lines=True, dtype=object, convert_dates=False)
-    #predict = Predictor().predict(df, 1, '01018')
-    predict = Predictor().predict(df, 10)
+    predict = Predictor().predict(df, 10, '01018')
+    #predict = Predictor().predict(df, 10)
     #random_ticket = Predictor().fn_random_ticket(df, 10)
     for index, row in predict.iterrows():
         print(str(f"{index+1:02d}") + ". ", row.tolist())
