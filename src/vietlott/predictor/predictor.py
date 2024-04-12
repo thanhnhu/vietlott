@@ -1,6 +1,7 @@
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from random import randint, choices
+import numpy as np
 #from datetime import datetime, timedelta
 #from io import StringIO
 #from pathlib import Path
@@ -13,13 +14,15 @@ from vietlott.config.products import get_config
 
 
 class Predictor():
-    def predict(self, df, number_of_ticket):
+    def predict(self, df, number_of_ticket, time_id = None):
+        if(time_id is not None):
+            df = df[df.id <= time_id]
+
         df["date"] = pd.to_datetime(df["date"]).dt.date
         data = df.sort_values(by=["date", "id"], ascending=True)
         #print(data.head(10))
         data = data["result"]
         data = pd.DataFrame(data.values.tolist(), columns= ["num_%d" % (i+1) for i in range(7)])
-        #data.fillna(0, inplace=True)
         #print(data.head(10))
 
         res = []
@@ -43,26 +46,38 @@ class Predictor():
             #     "num_5": [randint(5, 54) for _ in range(100)],
             #     "num_6": [randint(6, 55) for _ in range(100)],
             # })
-            new_ticket = self.fn_random_ticket(df, 1)
+            new_ticket = self.fn_random_ticket(df, 10)
             new_data = pd.DataFrame(new_ticket.values.tolist(), columns= ["num_%d" % (i+1) for i in range(6)])
 
             # Use the trained model to predict the next 6 numbers for each set of features
             predictions = model.predict(new_data)
 
-            # Get the most likely set of numbers based on the predictions
-            # most_likely_set = predictions[0]
-            # for p in predictions:
-            #     if p[0] > most_likely_set[0]:
-            #         most_likely_set = p
-
-            # Convert most_likely_set to whole numbers
-            #rounded_most_likely_set = [round(x) for x in most_likely_set]
-
-            # Print the most likely set of numbers
-            #print(str(f"{i+1:02d}") + ". The most likely set of numbers is:", rounded_most_likely_set)
-
+            # Convert predictions to whole numbers
+            predictions = [[round(i) for i in p] for p in predictions]
+            #print(predictions)
+            
+            # Select first number each row
+            arr_first_number = np.array(predictions)[:, 0]
+            # Group by the same first number & count
+            rows, count = np.unique(arr_first_number, return_counts = True)
+            
+            # Select rows have max count first number
+            repeated = []
             for p in predictions:
-                res.append([round(x) for x in p])
+                y = rows[count == count.max()]
+                if(y[0] == p[0]):
+                    repeated.append(p)
+
+            check_column = 0
+            if(len(repeated) >= 2):
+                predictions = repeated
+                check_column = 1
+            # Select closest row
+            a = min(np.array(predictions)[:,0])
+            b = max(np.array(predictions)[:,0])
+            chunk_size = (b-a) / 2
+            index = a + chunk_size
+            res.append(min(predictions, key=lambda x:abs(x[check_column]-index)))
 
             i += 1
 
@@ -141,10 +156,9 @@ class Predictor():
 if __name__ == "__main__":
     # Load the data from json file
     df = pd.read_json(get_config("power_655").raw_path, lines=True, dtype=object, convert_dates=False)
+    #predict = Predictor().predict(df, 1, '01018')
     predict = Predictor().predict(df, 10)
     #random_ticket = Predictor().fn_random_ticket(df, 10)
-    #print(type(predict))
-    #print(predict)
     for index, row in predict.iterrows():
         print(str(f"{index+1:02d}") + ". ", row.tolist())
     #for index, row in random_ticket.iterrows():

@@ -12,6 +12,8 @@ from vietlott.predictor.predictor import Predictor
 
 include_install_section = """# Install
  
+## run locally
+
 ```shell
 # add PATH C:\\Users\\win\\.pyenv\\pyenv-win\\versions\\3.11.4\\Scripts\\
 $ pip install -r requirements.txt
