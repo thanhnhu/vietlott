@@ -14,7 +14,7 @@ from vietlott.config.products import get_config
 
 
 class Predictor():
-    def predict(self, df, number_of_ticket, time_id = None):
+    def predict(self, df, number_of_ticket, time_id = None, name = None):
         if(time_id is not None):
             df = df[df.id < time_id].copy(deep=True)
 
@@ -22,14 +22,18 @@ class Predictor():
         data = df.sort_values(by=["date", "id"], ascending=True)
         #print(data.head(10))
         data = data["result"]
-        data = pd.DataFrame(data.values.tolist(), columns= ["num_%d" % (i+1) for i in range(7)])
+        if len(data[0]) == 7:  # Remove last column
+            for r in data: del r[-1]
+        data = pd.DataFrame(data.values.tolist(), columns= ["num_%d" % (i+1) for i in range(6)])
+        data.fillna(0, inplace=True)
+        data = data.apply(lambda x: x.astype(int))
 
         res = []
         i = 0
         while i < number_of_ticket:
             # Split the data into features (X) and target (y)
             X = data[['num_1', 'num_2', 'num_3', 'num_4', 'num_5', 'num_6']]
-            y = data.iloc[:, :-1] # Remove last column
+            y = data.iloc[:, :]
 
             # Train a Random Forest Regression model
             #model = RandomForestRegressor(n_estimators=1000, random_state=None)
@@ -45,7 +49,9 @@ class Predictor():
             #     "num_5": [randint(5, 54) for _ in range(100)],
             #     "num_6": [randint(6, 55) for _ in range(100)],
             # })
-            new_ticket = self.fn_random_ticket(df, 1)
+            new_ticket = self.fn_random_ticket_645(df, 1) \
+                if name is not None and name == "power_645" \
+                else self.fn_random_ticket_655(df, 1)
             new_data = pd.DataFrame(new_ticket.values.tolist(), columns= ["num_%d" % (i+1) for i in range(6)])
 
             # Use the trained model to predict the next 6 numbers for each set of features
@@ -84,7 +90,7 @@ class Predictor():
         return pd.DataFrame(res)
         #return pd.concat([new_ticket, pd.DataFrame(res)], ignore_index=True)
 
-    def fn_random_ticket(self, df, number_of_ticket):
+    def fn_random_ticket_655(self, df, number_of_ticket):
         res = []
         i = 0
         while i < number_of_ticket:
@@ -125,6 +131,47 @@ class Predictor():
 
         return pd.DataFrame(res)
 
+    def fn_random_ticket_645(self, df, number_of_ticket):
+        res = []
+        i = 0
+        while i < number_of_ticket:
+            item = []
+            # Number 1
+            population = list(range(1, 40 + 1))
+            #weights = [0.1, 0.05, 0.05, 0.2, 0.4, 0.2]
+            num1 = self.fn_random_number(df, 1, population)
+            item.append(num1[0])
+
+            # Number 2
+            population = list(range(num1[0] + 1, 41 + 1))
+            num2 = self.fn_random_number(df, 2, population)
+            item.append(num2[0])
+
+            # Number 3
+            population = list(range(num2[0] + 1, 42 + 1))
+            num3 = self.fn_random_number(df, 3, population)
+            item.append(num3[0])
+
+            # Number 4
+            population = list(range(num3[0] + 1, 43 + 1))
+            num4 = self.fn_random_number(df, 4, population)
+            item.append(num4[0])
+
+            # Number 5
+            population = list(range(num4[0] + 1, 44 + 1))
+            num5 = self.fn_random_number(df, 5, population)
+            item.append(num5[0])
+
+            # Number 6
+            population = list(range(num5[0] + 1, 45 + 1))
+            num6 = self.fn_random_number(df, 6, population)
+            item.append(num6[0])
+
+            res.append(item)
+            i += 1
+
+        return pd.DataFrame(res)
+
     def fn_random_number(self, df, col_number, population):
         count_percent = self.fn_count_percentage(df, col_number)
         existing_numbers = list(count_percent.index)
@@ -146,8 +193,14 @@ class Predictor():
             df = df.tail(count_time) # Get last results by count_time
 
         # Get all numbers by column index
-        data = pd.DataFrame(df["result"].values.tolist(), columns= ["%d" % (i+1) for i in range(7)])
+        data = df["result"]
+        if len(data[0]) == 7:  # Remove last column
+            for r in data: del r[-1]
+        data = pd.DataFrame(data.values.tolist(), columns= ["%d" % (i+1) for i in range(6)])
         #data = data.iloc[:, col_number-1]
+        data.fillna(0, inplace=True)
+        data = data.apply(lambda x: x.astype(int))
+
         stats = data.groupby("%d" % col_number).agg(count=("%d" % col_number, 'count'))
         stats['%'] = (stats['count'] / len(data) * 100).round(2)
         #print(stats)

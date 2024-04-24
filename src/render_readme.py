@@ -114,6 +114,10 @@ def main():
     df["date"] = pd.to_datetime(df["date"]).dt.date
     df = df.sort_values(by=["date", "id"], ascending=False)
 
+    df_645 = pd.read_json(get_config("power_645").raw_path, lines=True, dtype=object, convert_dates=False)
+    df_645["date"] = pd.to_datetime(df_645["date"]).dt.date
+    df_645 = df_645.sort_values(by=["date", "id"], ascending=False)
+
     def fn_stats(df_):
         df_explode = df_.explode("result")
         stats = df_explode.groupby("result").agg(count=("id", "count"))
@@ -136,19 +140,29 @@ def main():
     # df_random_tickets = random_model.df_backtest_evaluate[random_model.df_backtest_evaluate["correct_num"] >= 5][
     #     ["date", "result", "predicted"]
     # ]
-    df_random_tickets = Predictor().predict(df, ticket_per_days)
-    df_random_tickets = pd.DataFrame({'#': range(1, len(df_random_tickets) + 1),
-                                      'Tickets': df_random_tickets.values.tolist()})
+    df_random_tickets_655 = Predictor().predict(df, ticket_per_days)
+    df_random_tickets_655 = pd.DataFrame({'#': range(1, len(df_random_tickets_655) + 1),
+                                      'Tickets': df_random_tickets_655.values.tolist()})
 
-    #{stats.to_markdown(index=False)}
+    df_random_tickets_645 = Predictor().predict(df_645, ticket_per_days)
+    df_random_tickets_645 = pd.DataFrame({'#': range(1, len(df_random_tickets_645) + 1),
+                                      'Tickets': df_random_tickets_645.values.tolist()})
+
     output_str = f"""# Vietlot data
 ## Predictions (just for testing, not a financial advice)
-### random 10 tickets
-{df_random_tickets.to_markdown(index=False)}
+### random 10 tickets of power 6/55
+{df_random_tickets_655.to_markdown(index=False)}
 
-## raw details 6/55
-{df.head(10).to_markdown(index=False)}
-## stats 6/55 all time
+## top 20 details power 6/55
+{df.head(20).to_markdown(index=False)}
+
+### random 10 tickets of power 6/45
+{df_random_tickets_645.to_markdown(index=False)}
+
+## top 20 details power 6/45
+{df_645.head(20).to_markdown(index=False)}
+
+## stats 6/55 all time - stats.to_markdown(index=False)
 ## stats 6/55 -15d
 ## stats 6/55 -30d
 ## stats 6/55 -60d
