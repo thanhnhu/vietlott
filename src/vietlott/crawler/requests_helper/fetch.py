@@ -71,7 +71,8 @@ def fetch_wrapper(
 
             if not res.ok:
                 logger.error(
-                    f"req fail, args={task_data}, code={res.status_code}, headers={_headers}, params={params}, body={body}, res={res}, text={res.text[:200]}"
+                    #f"req failed, args={task_data}, code={res.status_code}, headers={_headers}, params={params}, body={body}, res={res}, text={res.text[:200]}"
+                    f"req failed, args={task_data}, code={res.status_code}, res={res}"
                 )
                 continue
             try:
