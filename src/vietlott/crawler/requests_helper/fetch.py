@@ -55,8 +55,9 @@ def fetch_wrapper(
             body.update(task_data["body"])
             # get proxies from https://www.sslproxies.org/
             proxy = {
-                #"https": '222.252.194.204:8080',
-                "http": '222.252.194.204:8080'
+                #"https": 'https://10.10.1.11:1080',
+                "http": '165.227.186.129:80',
+                #"ftp": "ftp://10.10.1.10:3128"
             }
             res = requests.post(
                 url,
@@ -70,7 +71,7 @@ def fetch_wrapper(
 
             if not res.ok:
                 logger.error(
-                    f"req fail, args={task_data}, code={res.status_code}, text={res.text[:200]}, headers={_headers}, body={body}, params={params}"
+                    f"req fail, args={task_data}, code={res.status_code}, headers={_headers}, params={params}, body={body}, res={res}, text={res.text[:200]}"
                 )
                 continue
             try:
