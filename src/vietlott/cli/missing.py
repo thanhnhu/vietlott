@@ -2,6 +2,7 @@ import math
 
 import click
 import pandas as pd
+pd.options.mode.chained_assignment = None  # default='warn'
 import pendulum
 from loguru import logger
 
@@ -36,11 +37,12 @@ def detect_missing_data(ctx, product, limit):
 
     product_cfg: ProductConfig = product_config_map[product]
     df = pd.read_json(product_cfg.raw_path, lines=True)
-    print(df["id"].dtype)
+    #print(df["id"].dtype)
     if df["id"].dtype == "object":
         df["id"] = df["id"].str.replace("#", "").astype(int)
     df["id_next"] = df["id"].shift(-1)
     df["diff"] = df["id_next"] - df["id"]
+    #df["id_next"] = df["id_next"].astype('Int64')
 
     df_missing = df[df["diff"] > 1]
     last_id = df["id"].max()
