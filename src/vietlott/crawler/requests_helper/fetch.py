@@ -6,6 +6,8 @@ import re
 from typing import Callable, Optional, Tuple
 
 import requests
+import pandas as pd
+from io import StringIO
 
 from vietlott.crawler.requests_helper.config import TIMEOUT
 
@@ -53,12 +55,16 @@ def fetch_wrapper(
 
             params.update(task_data["params"])
             body.update(task_data["body"])
-            # get proxies from https://www.sslproxies.org/
+
+            proxies = get_proxies()
+            #print(proxies)
+            random = proxies.sample(1)
             proxy = {
-                #"https": 'https://10.10.1.11:1080',
-                "http": '165.227.186.129:80',
-                #"ftp": "ftp://10.10.1.10:3128"
+                #"http": f"{random['IP Address']}:{random['Port']}",
+                "https": f"{random['IP Address'].iloc[0]}:{random['Port'].iloc[0]}"
             }
+            #print(proxy)
+            
             res = requests.post(
                 url,
                 json=body,
@@ -71,7 +77,7 @@ def fetch_wrapper(
 
             if not res.ok:
                 logger.error(
-                    #f"req failed, args={task_data}, code={res.status_code}, headers={_headers}, params={params}, body={body}, res={res.json()}, text={res.text[:200]}"
+                    #f"req failed, args={task_data}, code={res.status_code}, headers={_headers}, params={params}, body={body}, res={res.text}, text={res.text[:200]}"
                     f"req failed, args={task_data}, code={res.status_code}, res={res.text}"
                 )
                 continue
@@ -88,3 +94,10 @@ def fetch_wrapper(
         return results
 
     return fetch
+
+def get_proxies():
+    resp = requests.get('https://free-proxy-list.net/') 
+    df = pd.read_html(StringIO(resp.text))[0]
+    #df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
+    df = df[(df['Https'] == 'yes') & (df['Code'] == 'VN')]
+    return df

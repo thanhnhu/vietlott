@@ -10,13 +10,13 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
-    #runs-on: ubuntu-latest
+    #runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        python-version: [ 3.11.4 ]
-        #python-version: [ 3.12.3 ] #upgrade python while ubuntu-latest = 24.04
+        #python-version: [ 3.11.4 ]
+        python-version: [ 3.12.3 ] #upgrade python while ubuntu-latest = 24.04
 
     steps:
       - uses: actions/checkout@v4
