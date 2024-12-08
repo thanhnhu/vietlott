@@ -53,7 +53,11 @@ def fetch_wrapper(
 
             params.update(task_data["params"])
             body.update(task_data["body"])
-
+            # get proxies from https://www.sslproxies.org/
+            proxy = {
+                #"https": '222.252.194.204:8080',
+                "http": '222.252.194.204:8080'
+            }
             res = requests.post(
                 url,
                 json=body,
@@ -61,6 +65,7 @@ def fetch_wrapper(
                 headers=_headers,
                 cookies=cookies,
                 timeout=TIMEOUT,
+                proxies=proxy
             )
 
             if not res.ok:
