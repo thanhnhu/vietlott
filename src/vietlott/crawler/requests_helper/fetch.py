@@ -46,6 +46,9 @@ def fetch_wrapper(
         tasks_str = ",".join(str(t["task_id"]) for t in tasks)
         logger.debug(f"worker start, tasks_ids={tasks_str}")
         _headers = headers.copy()
+        # using proxy to avoid ban github ip
+        proxies = get_proxies()
+        # print(proxies)
 
         results = []
         for task in tasks:
@@ -56,16 +59,13 @@ def fetch_wrapper(
             params.update(task_data["params"])
             body.update(task_data["body"])
 
-            # using proxy to avoid ban github ip
-            proxies = get_proxies()
-            #print(proxies)
-            random = proxies.sample(1)
+            random_proxy = proxies.sample(1)
             proxy = {
-                #"http": f"{random['IP Address']}:{random['Port']}",
-                "https": f"{random['IP Address'].iloc[0]}:{random['Port'].iloc[0]}"
+                # "http": f"{random['IP Address']}:{random['Port']}",
+                "https": f"{random_proxy['IP Address'].iloc[0]}:{random_proxy['Port'].iloc[0]}"
             }
             #print(proxy)
-            
+
             res = requests.post(
                 url,
                 json=body,
@@ -78,7 +78,7 @@ def fetch_wrapper(
 
             if not res.ok:
                 logger.error(
-                    #f"req failed, args={task_data}, code={res.status_code}, headers={_headers}, params={params}, body={body}, res={res.text}, text={res.text[:200]}"
+                    # f"req failed, args={task_data}, code={res.status_code}, headers={_headers}, params={params}, body={body}, res={res.text}, text={res.text[:200]}"
                     f"req failed, args={task_data}, code={res.status_code}, proxy={proxy}, res={res.text}"
                 )
                 continue
@@ -96,9 +96,22 @@ def fetch_wrapper(
 
     return fetch
 
+
 def get_proxies():
-    resp = requests.get('https://free-proxy-list.net/') 
+    resp = requests.get('https://free-proxy-list.net/')
     df = pd.read_html(StringIO(resp.text))[0]
-    #df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
+    # df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
     df = df[(df['Https'] == 'yes') & (df['Code'] == 'VN')]
+    # filter if proxy is good
+    df = df[df.apply(lambda x: check_proxy(f"{x['IP Address']}:{x['Port']}"), axis=1)]
     return df
+
+
+def check_proxy(proxy):
+    checkApi = 'http://icanhazip.com'
+    try:
+        response = requests.get(checkApi, proxies={'https': proxy}, timeout=5)
+        status = response.status_code
+        return status == 200
+    except Exception:
+        return False
