@@ -56,6 +56,7 @@ def fetch_wrapper(
             params.update(task_data["params"])
             body.update(task_data["body"])
 
+            # using proxy to avoid ban github ip
             proxies = get_proxies()
             #print(proxies)
             random = proxies.sample(1)
@@ -78,7 +79,7 @@ def fetch_wrapper(
             if not res.ok:
                 logger.error(
                     #f"req failed, args={task_data}, code={res.status_code}, headers={_headers}, params={params}, body={body}, res={res.text}, text={res.text[:200]}"
-                    f"req failed, args={task_data}, code={res.status_code}, res={res.text}"
+                    f"req failed, args={task_data}, code={res.status_code}, proxy={proxy}, res={res.text}"
                 )
                 continue
             try:
