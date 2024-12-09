@@ -20,6 +20,7 @@ headers = {
     "Accept-Language": "en-US,en;q=0.5",
     "Accept-Encoding": "gzip, deflate, br",
     "Content-Type": "text/plain; charset=utf-8",
+    "Cache-Control": "no-cache",
     "X-AjaxPro-Method": "ServerSideDrawResult",
     "Content-Length": "670",
     "Origin": "https://vietlott.vn",

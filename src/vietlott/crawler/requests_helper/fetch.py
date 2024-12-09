@@ -6,6 +6,11 @@ import re
 from typing import Callable, Optional, Tuple
 
 import requests
+import urllib3
+from urllib3.exceptions import InsecureRequestWarning, ConnectTimeoutError, NewConnectionError
+urllib3.disable_warnings(ConnectTimeoutError)
+urllib3.disable_warnings(NewConnectionError)
+
 import pandas as pd
 from io import StringIO
 
@@ -73,7 +78,8 @@ def fetch_wrapper(
                 headers=_headers,
                 cookies=cookies,
                 timeout=TIMEOUT,
-                proxies=proxy
+                proxies=proxy,
+                #verify=False
             )
 
             if not res.ok:
@@ -85,7 +91,7 @@ def fetch_wrapper(
             try:
                 result = process_result_fn(params, body, res.json(), task_data)
                 results.append(result)
-                logger.debug(f"task {task_id} done")
+                logger.debug(f"task {task_id}, proxy={proxy} done")
             except requests.exceptions.JSONDecodeError as e:
                 logger.error(
                     f"json decode error, args={task_data}, text={res.text[:200]}, headers={headers}, cookies={cookies}, body={body}, params={params}"
@@ -103,14 +109,14 @@ def get_proxies():
     # df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
     df = df[(df['Https'] == 'yes') & (df['Code'] == 'VN')]
     # filter if proxy is good
-    #df = df[df.apply(lambda x: check_proxy(f"{x['IP Address']}:{x['Port']}"), axis=1)]
+    df = df[df.apply(lambda x: check_proxy(f"{x['IP Address']}:{x['Port']}"), axis=1)]
     return df
 
 
 def check_proxy(proxy):
     checkApi = 'http://icanhazip.com'
     try:
-        response = requests.get(checkApi, proxies={'https': proxy}, timeout=5)
+        response = requests.get(checkApi, proxies={'https': proxy}, timeout=TIMEOUT)
         status = response.status_code
         return status == 200
     except Exception:
