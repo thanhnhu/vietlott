@@ -79,7 +79,7 @@ def fetch_wrapper(
                 cookies=cookies,
                 timeout=TIMEOUT,
                 proxies=proxy,
-                verify=False
+                #verify=False
             )
 
             if not res.ok:
@@ -109,7 +109,7 @@ def get_proxies():
     # df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
     df = df[(df['Https'] == 'yes') & (df['Code'] == 'VN')]
     # filter if proxy is good
-    df = df[df.apply(lambda x: check_proxy(f"{x['IP Address']}:{x['Port']}"), axis=1)]
+    #df = df[df.apply(lambda x: check_proxy(f"{x['IP Address']}:{x['Port']}"), axis=1)]
     return df
 
 
