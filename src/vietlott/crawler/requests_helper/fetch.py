@@ -79,7 +79,7 @@ def fetch_wrapper(
                 cookies=cookies,
                 timeout=TIMEOUT,
                 proxies=proxy,
-                #verify=False
+                verify=False
             )
 
             if not res.ok:
