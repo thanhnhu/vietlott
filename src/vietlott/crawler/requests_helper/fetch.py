@@ -65,47 +65,53 @@ def fetch_wrapper(
             params.update(task_data["params"])
             body.update(task_data["body"])
 
-            random_proxy = proxies.sample(1)
-            proxy = {
-                "http": f"{random_proxy['IP Address'].iloc[0]}:{random_proxy['Port'].iloc[0]}",
-                "https": f"{random_proxy['IP Address'].iloc[0]}:{random_proxy['Port'].iloc[0]}"
-            }
-            # print(proxy)
+            for index, row in proxies.iterrows():
+                proxy = {
+                    "http": f"{row['IP Address']}:{row['Port']}",
+                    "https": f"{row['IP Address']}:{row['Port']}"
+                }
+                str_proxy = f"{row['IP Address']}:{row['Port']}"
+                # print(proxy)
 
-            try:
-                res = requests.post(
-                    url,
-                    json=body,
-                    params=params,
-                    headers=_headers,
-                    cookies=cookies,
-                    timeout=TIMEOUT,
-                    proxies=proxy,
-                    # verify=False
-                )
-
-                if not res.ok:
-                    logger.error(
-                        # f"req failed, args={task_data}, code={res.status_code}, headers={_headers}, params={params}, body={body}, res={res.text}, text={res.text[:200]}"
-                        f"req failed, args={task_data}, code={res.status_code}, proxy={proxy}, res={res.text}"
-                    )
-                    continue
                 try:
-                    result = process_result_fn(params, body, res.json(), task_data)
-                    results.append(result)
-                    logger.debug(f"task {task_id}, proxy={proxy} done")
-                except requests.exceptions.JSONDecodeError as e:
-                    logger.error(
-                        f"json decode error, args={task_data}, text={res.text[:200]}, headers={headers}, cookies={cookies}, body={body}, params={params}"
+                    res = requests.post(
+                        url,
+                        json=body,
+                        params=params,
+                        headers=_headers,
+                        cookies=cookies,
+                        timeout=TIMEOUT,
+                        proxies=proxy,
+                        # verify=False
                     )
-                    raise e
 
-            # handle exception on request
-            except Exception as error:
-                # logger.debug(f"ProxyError, error={error.__str__()}")
-                logger.error(f"{type(error).__name__}, task {task_id}, proxy={proxy}, error={error}")
-                logger.debug(f"worker error, tasks={tasks_str}")
-                return results
+                    if not res.ok:
+                        bannedMess = "You are unable to access"
+                        if bannedMess in res.text:
+                            logger.error(
+                                # f"req failed, args={task_data}, code={res.status_code}, headers={_headers}, params={params}, body={body}, res={res.text}, text={res.text[:200]}"
+                                f"req failed, args={task_data}, code={res.status_code}, proxy={str_proxy}, res='Banned IP!!!'"
+                            )
+                        else:
+                            logger.error(
+                                # f"req failed, args={task_data}, code={res.status_code}, headers={_headers}, params={params}, body={body}, res={res.text}, text={res.text[:200]}"
+                                f"req failed, args={task_data}, code={res.status_code}, proxy={str_proxy}, res={res.text}"
+                            )
+                        continue
+                    try:
+                        result = process_result_fn(params, body, res.json(), task_data)
+                        results.append(result)
+                        logger.debug(f"task {task_id}, proxy={str_proxy} done")
+                        break # break of loop proxy
+                    except Exception as error:
+                        logger.error(
+                            f"{type(error).__name__}, args={task_data}, text={res.text[:200]}, headers={headers}, cookies={cookies}, body={body}, params={params}"
+                        )
+
+                # handle exception on request
+                except Exception as error:
+                    # logger.error(f"{type(error).__name__}, task {task_id}, proxy={str_proxy}, error={error}")
+                    logger.error(f"{type(error).__name__}, task {task_id}, proxy={str_proxy}")
 
         logger.debug(f"worker done, tasks={tasks_str}")
         return results
@@ -117,7 +123,8 @@ def get_proxies():
     resp = requests.get('https://free-proxy-list.net/')
     df = pd.read_html(StringIO(resp.text))[0]
     # df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
-    df = df[(df['Https'] == 'yes') & (df['Code'] == 'VN')]
+    # df = df[(df['Https'] == 'yes') & (df['Code'] == 'VN')]
+    df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes')]
     # filter if proxy is good
     # df = df[df.apply(lambda x: check_proxy(f"{x['IP Address']}:{x['Port']}"), axis=1)]
     return df
