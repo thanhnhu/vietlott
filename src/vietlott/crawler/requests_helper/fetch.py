@@ -19,6 +19,11 @@ from vietlott.crawler.requests_helper.config import TIMEOUT
 
 from loguru import logger
 
+import threading
+
+
+bad_proxies = []
+lock = threading.Lock()
 
 def get_vietlott_cookie() -> Tuple[str, dict]:
     res = requests.get("https://vietlott.vn/ajaxpro/")
@@ -66,11 +71,13 @@ def fetch_wrapper(
             body.update(task_data["body"])
 
             for index, row in proxies.iterrows():
+                str_proxy = f"{row['IP Address']}:{row['Port']}"
+                if str_proxy in bad_proxies: continue
+
                 proxy = {
                     "http": f"{row['IP Address']}:{row['Port']}",
                     "https": f"{row['IP Address']}:{row['Port']}"
                 }
-                str_proxy = f"{row['IP Address']}:{row['Port']}"
                 # print(proxy)
 
                 try:
@@ -97,6 +104,7 @@ def fetch_wrapper(
                                 # f"req failed, args={task_data}, code={res.status_code}, headers={_headers}, params={params}, body={body}, res={res.text}, text={res.text[:200]}"
                                 f"req failed, args={task_data}, code={res.status_code}, proxy={str_proxy}, res={res.text}"
                             )
+                        add_to_bad_list(str_proxy)
                         continue
                     try:
                         result = process_result_fn(params, body, res.json(), task_data)
@@ -112,6 +120,7 @@ def fetch_wrapper(
                 except Exception as error:
                     # logger.error(f"{type(error).__name__}, task {task_id}, proxy={str_proxy}, error={error}")
                     logger.error(f"{type(error).__name__}, task {task_id}, proxy={str_proxy}")
+                    add_to_bad_list(str_proxy)
 
         logger.debug(f"worker done, tasks={tasks_str}")
         return results
@@ -122,9 +131,7 @@ def fetch_wrapper(
 def get_proxies():
     resp = requests.get('https://free-proxy-list.net/')
     df = pd.read_html(StringIO(resp.text))[0]
-    # df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
-    # df = df[(df['Https'] == 'yes') & (df['Code'] == 'VN')]
-    df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes')]
+    df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
     # filter if proxy is good
     # df = df[df.apply(lambda x: check_proxy(f"{x['IP Address']}:{x['Port']}"), axis=1)]
     return df
@@ -138,3 +145,8 @@ def check_proxy(proxy):
         return status == 200
     except Exception:
         return False
+
+def add_to_bad_list(item):
+    with lock:
+        if item not in bad_proxies:
+            bad_proxies.append(item)
