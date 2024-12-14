@@ -148,7 +148,7 @@ def main():
     df_random_tickets_645 = pd.DataFrame({'#': range(1, len(df_random_tickets_645) + 1),
                                       'Tickets': df_random_tickets_645.values.tolist()})
 
-    output_str = f"""# Vietlot data
+    output_str = f"""# Vietlot
 ## Predictions (just for testing, not a financial advice)
 ### random 10 tickets of power 6/55
 {df_random_tickets_655.to_markdown(index=False)}
@@ -162,11 +162,13 @@ def main():
 ## top 20 details power 6/45
 {df_645.head(20).to_markdown(index=False)}
 
-## stats 6/55 all time - stats.to_markdown(index=False)
-## stats 6/55 -15d
-## stats 6/55 -30d
-## stats 6/55 -60d
-## stats 6/55 -90d
+<!---
+stats 6/55 all time - stats.to_markdown(index=False)
+stats 6/55 -15d - stats_15d.to_markdown(index=False)
+stats 6/55 -30d - stats_30d.to_markdown(index=False)
+stats 6/55 -60d - stats_60d.to_markdown(index=False)
+stats 6/55 -90d - stats_90d.to_markdown(index=False)
+-->
 
 {include_install_section}
 """

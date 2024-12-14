@@ -73,12 +73,9 @@ def fetch_wrapper(
             for index, row in proxies.iterrows():
                 str_proxy = f"{row['IP Address']}:{row['Port']}"
                 if str_proxy in bad_proxies: continue
+                # print(f"proxy: {str_proxy}")
 
-                proxy = {
-                    "http": f"{row['IP Address']}:{row['Port']}",
-                    "https": f"{row['IP Address']}:{row['Port']}"
-                }
-                # print(proxy)
+                proxy = { "http": str_proxy, "https": str_proxy }
 
                 try:
                     res = requests.post(
@@ -88,8 +85,7 @@ def fetch_wrapper(
                         headers=_headers,
                         cookies=cookies,
                         timeout=TIMEOUT,
-                        proxies=proxy,
-                        # verify=False
+                        proxies=proxy
                     )
 
                     if not res.ok:
@@ -110,7 +106,7 @@ def fetch_wrapper(
                         result = process_result_fn(params, body, res.json(), task_data)
                         results.append(result)
                         logger.debug(f"task {task_id}, proxy={str_proxy} done")
-                        break # break of loop proxy
+                        break # break the proxy loop
                     except Exception as error:
                         logger.error(
                             f"{type(error).__name__}, args={task_data}, text={res.text[:200]}, headers={headers}, cookies={cookies}, body={body}, params={params}"
