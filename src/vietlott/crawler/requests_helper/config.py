@@ -22,7 +22,6 @@ headers = {
     "Content-Type": "text/plain; charset=utf-8",
     "Cache-Control": "no-cache",
     "X-AjaxPro-Method": "ServerSideDrawResult",
-    "Content-Length": "670",
     "Origin": "https://vietlott.vn",
     "Connection": "keep-alive",
     "Referer": "https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/winning-number-655",

@@ -134,12 +134,14 @@ def main():
 
     # predictions
     ticket_per_days = 10
-    # random_model = RandomModel(df, ticket_per_days)
-    # random_model.backtest()
-    # random_model.evaluate()
-    # df_random_tickets = random_model.df_backtest_evaluate[random_model.df_backtest_evaluate["correct_num"] >= 5][
-    #     ["date", "result", "predicted"]
-    # ]
+    # strategy 1
+    random_model = RandomModel(df, ticket_per_days)
+    random_model.backtest()
+    random_model.evaluate()
+    df_random_correct = random_model.df_backtest_evaluate[random_model.df_backtest_evaluate["correct_num"] >= 5][
+        ["date", "result", "predicted"]
+    ]
+    # strategy 2
     df_random_tickets_655 = Predictor().predict(df, ticket_per_days)
     df_random_tickets_655 = pd.DataFrame({'#': range(1, len(df_random_tickets_655) + 1),
                                       'Tickets': df_random_tickets_655.values.tolist()})
@@ -151,6 +153,11 @@ def main():
     output_str = f"""# Vietlot
 ## Predictions (just for testing, not a financial advice)
 ### random 10 tickets of power 6/55
+
+strategy 1:
+{df_random_correct.to_markdown(index=False)}
+
+strategy 2
 {df_random_tickets_655.to_markdown(index=False)}
 
 ## top 20 details power 6/55
