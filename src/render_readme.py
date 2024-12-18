@@ -157,7 +157,7 @@ def main():
 strategy 1:
 {df_random_correct.to_markdown(index=False)}
 
-strategy 2
+strategy 2:
 {df_random_tickets_655.to_markdown(index=False)}
 
 ## top 20 details power 6/55
