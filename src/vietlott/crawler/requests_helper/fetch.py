@@ -127,8 +127,12 @@ def fetch_wrapper(
 def get_proxies():
     resp = requests.get('https://free-proxy-list.net/')
     df = pd.read_html(StringIO(resp.text))[0]
-    df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
-    # filter if proxy is good
+    # df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
+    df = df[(df['Https'] == 'yes')]
+    # sort the 'VN' first
+    df['Order'] = df['Code'].apply(lambda x: 0 if x == 'VN' else 1)
+    df = df.sort_values(by='Order').drop('Order', axis=1)
+    # no need to filter if proxy is good
     # df = df[df.apply(lambda x: check_proxy(f"{x['IP Address']}:{x['Port']}"), axis=1)]
     return df
 
@@ -141,6 +145,7 @@ def check_proxy(proxy):
         return status == 200
     except Exception:
         return False
+
 
 def add_to_bad_list(item):
     with lock:
