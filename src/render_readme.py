@@ -150,7 +150,7 @@ def main():
     df_random_tickets_645 = pd.DataFrame({'#': range(1, len(df_random_tickets_645) + 1),
                                       'Tickets': df_random_tickets_645.values.tolist()})
 
-    output_str = f"""# Vietlot
+    output_str = f"""# Vietlot - clone from [here](https://github.com/vietvudanh/vietlott-data)
 ## Predictions (just for testing, not a financial advice)
 ### random 10 tickets of power 6/55
 
@@ -161,13 +161,13 @@ strategy 2:
 {df_random_tickets_655.to_markdown(index=False)}
 
 ## top 20 details power 6/55
-{df.head(20).to_markdown(index=False)}
+{df.drop(['page', 'process_time'], axis=1).head(20).to_markdown(index=False)}
 
 ### random 10 tickets of power 6/45
 {df_random_tickets_645.to_markdown(index=False)}
 
 ## top 20 details power 6/45
-{df_645.head(20).to_markdown(index=False)}
+{df_645.drop(['page', 'process_time'], axis=1).head(20).to_markdown(index=False)}
 
 <!---
 stats 6/55 all time - stats.to_markdown(index=False)
