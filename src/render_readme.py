@@ -150,7 +150,8 @@ def main():
     df_random_tickets_645 = pd.DataFrame({'#': range(1, len(df_random_tickets_645) + 1),
                                       'Tickets': df_random_tickets_645.values.tolist()})
 
-    output_str = f"""# Vietlot - clone from [here](https://github.com/vietvudanh/vietlott-data)
+    output_str = f"""# Vietlot
+Crawl lottery data from [vietlott](https://vietlott.vn), and predict tickets - it's a copy from [here](https://github.com/vietvudanh/vietlott-data)
 ## Predictions (just for testing, not a financial advice)
 ### random 10 tickets of power 6/55
 
