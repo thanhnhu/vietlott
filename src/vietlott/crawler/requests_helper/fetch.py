@@ -128,7 +128,6 @@ def get_proxies():
     resp = requests.get('https://free-proxy-list.net/')
     df = pd.read_html(StringIO(resp.text))[0]
     # df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
-    df = df[(df['Https'] == 'yes')]
     # sort the 'VN' first
     df['Order'] = df['Code'].apply(lambda x: 0 if x == 'VN' else 1)
     df = df.sort_values(by='Order').drop('Order', axis=1)
