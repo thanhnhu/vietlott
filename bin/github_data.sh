@@ -24,6 +24,8 @@ python src/vietlott/cli/missing.py power_645
 #python src/vietlott/cli/crawl.py keno
 #python src/vietlott/cli/missing.py keno
 
+# Set TensorFlow logging level to suppress warnings and info
+export TF_CPP_MIN_LOG_LEVEL=3
 python src/render_readme.py
 
 #if [[ ! -d "$FOLDER" ]] ; then
