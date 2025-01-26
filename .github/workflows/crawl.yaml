@@ -1,11 +1,11 @@
 name: Crawling
 
 on:
+  workflow_dispatch: # allow manual run
   push:
     branches: master
   schedule:
-    # * is a special character in YAML so you have to quote this string
-    - cron: '0 12 * * *'
+    - cron: '0 12 * * *' # run every day at 12:00 UTC (19h VN time)
 
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [ 3.12.3 ] #upgrade python while ubuntu-latest = 24.04
+        python-version: [ 3.12.3 ] # upgrade python while ubuntu-latest = 24.04
 
     steps:
       - uses: actions/checkout@v4

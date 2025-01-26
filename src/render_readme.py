@@ -9,6 +9,7 @@ from loguru import logger
 from vietlott.config.products import get_config
 from vietlott.model.strategy.random import RandomModel
 from vietlott.predictor.predictor import Predictor
+from vietlott.predictor.predictor2 import Predictor2
 
 include_install_section = """# Install
  
@@ -21,6 +22,7 @@ $ python src/vietlott/cli/crawl.py power_655
 $ python src/vietlott/cli/missing.py power_655
 $ python src/render_readme.py
 $ python src/vietlott/predictor/predictor.py
+$ python src/vietlott/predictor/predictor2.py
 ```
  
 ## via pip
@@ -110,9 +112,9 @@ def read_data_str(data_dir: Path):
 
 
 def main():
-    df = pd.read_json(get_config("power_655").raw_path, lines=True, dtype=object, convert_dates=False)
-    df["date"] = pd.to_datetime(df["date"]).dt.date
-    df = df.sort_values(by=["date", "id"], ascending=False)
+    df_655 = pd.read_json(get_config("power_655").raw_path, lines=True, dtype=object, convert_dates=False)
+    df_655["date"] = pd.to_datetime(df_655["date"]).dt.date
+    df_655 = df_655.sort_values(by=["date", "id"], ascending=False)
 
     df_645 = pd.read_json(get_config("power_645").raw_path, lines=True, dtype=object, convert_dates=False)
     df_645["date"] = pd.to_datetime(df_645["date"]).dt.date
@@ -135,20 +137,26 @@ def main():
     # predictions
     ticket_per_days = 10
     # strategy 1
-    random_model = RandomModel(df, ticket_per_days)
+    random_model = RandomModel(df_655, ticket_per_days)
     random_model.backtest()
     random_model.evaluate()
-    df_random_correct = random_model.df_backtest_evaluate[random_model.df_backtest_evaluate["correct_num"] >= 5][
-        ["date", "result", "predicted"]
-    ]
+    df_655_predict_1 = random_model.df_backtest_evaluate[random_model.df_backtest_evaluate["correct_num"] >= 5][["date", "result", "predicted"]]
     # strategy 2
-    df_random_tickets_655 = Predictor().predict(df, ticket_per_days)
-    df_random_tickets_655 = pd.DataFrame({'#': range(1, len(df_random_tickets_655) + 1),
-                                      'Tickets': df_random_tickets_655.values.tolist()})
+    df_655_predict_2 = Predictor2().predict(df_655)
+    df_655_predict_2 = pd.DataFrame({'#': range(1, len(df_655_predict_2) + 1),
+                                      'Tickets': df_655_predict_2.values.tolist()})
 
-    df_random_tickets_645 = Predictor().predict(df_645, ticket_per_days)
-    df_random_tickets_645 = pd.DataFrame({'#': range(1, len(df_random_tickets_645) + 1),
-                                      'Tickets': df_random_tickets_645.values.tolist()})
+    df_645_predict_2 = Predictor2().predict(df_645)
+    df_645_predict_2 = pd.DataFrame({'#': range(1, len(df_645_predict_2) + 1),
+                                      'Tickets': df_645_predict_2.values.tolist()})
+    # strategy 3
+    df_655_predict_3 = Predictor().predict(df_655, ticket_per_days)
+    df_655_predict_3 = pd.DataFrame({'#': range(1, len(df_655_predict_3) + 1),
+                                      'Tickets': df_655_predict_3.values.tolist()})
+
+    df_645_predict_3 = Predictor().predict(df_645, ticket_per_days)
+    df_645_predict_3 = pd.DataFrame({'#': range(1, len(df_645_predict_3) + 1),
+                                      'Tickets': df_645_predict_3.values.tolist()})
 
     output_str = f"""# Vietlot
 auto crawl lottery data from [vietlott](https://vietlott.vn) daily, and predict tickets - it's a copy from [here](https://github.com/vietvudanh/vietlott-data)
@@ -156,16 +164,24 @@ auto crawl lottery data from [vietlott](https://vietlott.vn) daily, and predict 
 ### random 10 tickets of power 6/55
 
 strategy 1:
-{df_random_correct.to_markdown(index=False)}
+{df_655_predict_1.to_markdown(index=False)}
 
 strategy 2:
-{df_random_tickets_655.to_markdown(index=False)}
+{df_655_predict_2.to_markdown(index=False)}
+
+strategy 3:
+{df_655_predict_3.to_markdown(index=False)}
 
 ## top 20 details power 6/55
-{df.drop(['page', 'process_time'], axis=1).head(20).to_markdown(index=False)}
+{df_655.drop(['page', 'process_time'], axis=1).head(20).to_markdown(index=False)}
 
 ### random 10 tickets of power 6/45
-{df_random_tickets_645.to_markdown(index=False)}
+
+strategy 1:
+{df_645_predict_2.to_markdown(index=False)}
+
+strategy 2:
+{df_645_predict_3.to_markdown(index=False)}
 
 ## top 20 details power 6/45
 {df_645.drop(['page', 'process_time'], axis=1).head(20).to_markdown(index=False)}
