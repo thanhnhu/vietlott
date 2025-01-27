@@ -1,7 +1,8 @@
 import pandas as pd
+import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from random import randint, choices
-import numpy as np
+from loguru import logger
 #from datetime import datetime, timedelta
 #from io import StringIO
 #from pathlib import Path
@@ -15,6 +16,7 @@ from vietlott.config.products import get_config
 
 class Predictor():
     def predict(self, df, number_of_ticket, time_id = None, name = None):
+        logger.info(f"predict by RandomForestRegressor")
         if(time_id is not None):
             df = df[df.id < time_id].copy(deep=True)
 

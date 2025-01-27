@@ -1,12 +1,13 @@
 import os, sys
 # disable tensorflow warnings/messages
-#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-#os.environ['PYCARET_CUSTOM_LOGGING_LEVEL'] = 'CRITICAL'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['PYCARET_CUSTOM_LOGGING_LEVEL'] = 'CRITICAL'
 
 import pandas as pd
 import numpy as np
 from tensorflow import keras
 from keras import layers
+from loguru import logger
 
 sys.path.append(os.path.dirname(os.path.abspath('src/vietlott')))
 from vietlott.config.products import get_config
@@ -14,6 +15,7 @@ from vietlott.config.products import get_config
 
 class Predictor2():
     def predict(self, df, number_of_tickets = 1, time_id = None):
+        logger.info(f"predict by TensorFlow")
         if(time_id is not None):
             df = df[df.id < time_id].copy(deep=True)
 
@@ -71,20 +73,20 @@ class Predictor2():
     # Function to train the model
     def train_model(self, model, train_data, val_data):
         # Add early stopping to prevent overfitting
-        early_stopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+        early_stopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, verbose=0)
         # Fit the model on the training data and validate on the validation data
-        model.fit(train_data, train_data, validation_data=(val_data, val_data), epochs=100, callbacks=[early_stopping])
+        model.fit(train_data, train_data, validation_data=(val_data, val_data), epochs=100, callbacks=[early_stopping], verbose=0)
 
     # Function to predict numbers using the trained model
     def predict_numbers(self, model, val_data, num_features):
         batch_size = 32
         predictions = []
         for i in range(0, len(val_data), batch_size):
-            batch_predictions = model.predict(val_data[i:i+batch_size])
+            batch_predictions = model.predict(val_data[i:i+batch_size], verbose=0)
             predictions.append(batch_predictions)
         predictions = np.vstack(predictions)
         # Predict on the validation data using the model
-        predictions = model.predict(val_data)
+        predictions = model.predict(val_data, verbose=0)
         # Get the indices of the top 'num_features' predictions for each sample in validation data
         indices = np.argsort(predictions, axis=1)[:, -num_features:]
         
