@@ -67,4 +67,4 @@ urllib3==2.2.1
 scikit-learn==1.4.1.post1
 openpyxl==3.1.2
 pip-system-certs
-tensorflow
+tensorflow[and-cuda]==2.16.1
