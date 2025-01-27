@@ -142,11 +142,11 @@ def main():
     random_model.evaluate()
     df_655_predict_1 = random_model.df_backtest_evaluate[random_model.df_backtest_evaluate["correct_num"] >= 5][["date", "result", "predicted"]]
     # strategy 2
-    df_655_predict_2 = Predictor2().predict(df_655)
+    df_655_predict_2 = Predictor2().predict(df_655, 2)
     df_655_predict_2 = pd.DataFrame({'#': range(1, len(df_655_predict_2) + 1),
                                       'Tickets': df_655_predict_2.values.tolist()})
 
-    df_645_predict_2 = Predictor2().predict(df_645)
+    df_645_predict_2 = Predictor2().predict(df_645, 2)
     df_645_predict_2 = pd.DataFrame({'#': range(1, len(df_645_predict_2) + 1),
                                       'Tickets': df_645_predict_2.values.tolist()})
     # strategy 3

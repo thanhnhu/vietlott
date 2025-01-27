@@ -26,7 +26,7 @@ class Predictor2():
         data = df.sort_values(by=["date", "id"], ascending=True)
         data = data["result"]
         if len(data[0]) == 7:  # Remove last column
-            for r in data: del r[-1]
+            data = data.apply(lambda x: x[:-1])
         data = pd.DataFrame(data.values.tolist())
         data.fillna(0, inplace=True)
         data = data.apply(lambda x: x.astype(int))
@@ -48,17 +48,11 @@ class Predictor2():
         self.train_model(model, train_data, val_data)
         
         # Predict numbers using trained model
-        res = []
-        i = 0
-        while i < number_of_tickets:
-            predict_numbers = self.predict_numbers(model, val_data, num_features)
-            res.append(predict_numbers[0])
-            i += 1
-        #print(f"res: {res}")
-        #res = np.vstack(res)
-        res = np.sort(res, axis=1)
+        predict_numbers = self.predict_numbers(model, val_data, num_features)
+        #print(f"predict_numbers: {predict_numbers}")
+        res = predict_numbers[:number_of_tickets]
 
-        return pd.DataFrame(res)
+        return pd.DataFrame(np.sort(res, axis=1))
 
     # Function to create the model
     def create_model(self, num_features, max_value):
@@ -80,22 +74,57 @@ class Predictor2():
         model.fit(train_data, train_data, validation_data=(val_data, val_data), epochs=100, callbacks=[early_stopping], verbose=0)
 
     # Function to predict numbers using the trained model
-    def predict_numbers(self, model, val_data, num_features):
-        batch_size = 32
-        predictions = []
-        for i in range(0, len(val_data), batch_size):
-            batch_predictions = model.predict(val_data[i:i+batch_size], verbose=0)
-            predictions.append(batch_predictions)
-        predictions = np.vstack(predictions)
+    def predict_numbers(self, model, val_data, num_features, temperature=1.0):
         # Predict on the validation data using the model
         predictions = model.predict(val_data, verbose=0)
+
+        # Apply temperature to adjust the distribution of authentication
+        predictions = predictions / temperature
+        predictions = np.exp(predictions) / np.sum(np.exp(predictions), axis=1, keepdims=True)
+
         # Get the indices of the top 'num_features' predictions for each sample in validation data
         indices = np.argsort(predictions, axis=1)[:, -num_features:]
-        
         # Get the predicted numbers using these indices from validation data
         val_data_np = val_data.to_numpy()
-        predicted_numbers = np.take_along_axis(val_data_np, indices, axis=1)
+        predicted_numbers = np.take_along_axis(val_data_np, indices, axis=1)        
+
         return predicted_numbers
+    
+    # Function to predict numbers using the probabilities
+    def predict_numbers_1(self, model, val_data, num_features, max_value):
+        # Predict on the validation data using the model
+        predictions = model.predict(val_data, verbose=0)
+
+        # Normalize the probabilities for each number
+        probabilities = predictions / np.sum(predictions, axis=1, keepdims=True)
+        
+        # Ensure the probabilities sum to 1 (to avoid floating-point errors)
+        probabilities = np.clip(probabilities, 0, 1)
+        probabilities /= np.sum(probabilities, axis=1, keepdims=True)
+        
+        # Check if the probabilities sum to 1 for each sample
+        if not np.allclose(np.sum(probabilities, axis=1), 1):
+            print("Warning: Probabilities do not sum to 1.")
+            print("Sum of probabilities:", np.sum(probabilities, axis=1))
+
+        # Sample from the probability distribution for each number without replacement
+        predicted_numbers = []
+        for prob in probabilities:
+            # Ensure the probability distribution matches the size of the range [1, max_value]
+            prob_normalized = np.concatenate([np.zeros(max_value - len(prob)), prob])
+
+            # Check if the probabilities sum to 1 after concatenation
+            if not np.allclose(np.sum(prob_normalized), 1):
+                print("Warning: Normalized probabilities do not sum to 1.")
+                print("Sum of normalized probabilities:", np.sum(prob_normalized))
+
+            # Use np.random.choice to select unique numbers from 1 to max_value without replacement
+            predicted_number = np.random.choice(np.arange(1, max_value + 1), size=num_features, p=prob_normalized, replace=False)
+            predicted_numbers.append(predicted_number)
+
+        return np.array(predicted_numbers)
+
+
 
 if __name__ == "__main__":
     # Load the data from json file
