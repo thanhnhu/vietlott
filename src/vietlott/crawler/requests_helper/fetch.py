@@ -130,25 +130,15 @@ def get_proxies():
         resp.raise_for_status()
         df = pd.read_html(StringIO(resp.text))[0]
         # df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
-        # sort the 'VN' first
-        df['Order'] = df['Code'].apply(lambda x: 0 if x == 'VN' else 1)
-        df = df.sort_values(by='Order').drop('Order', axis=1)
-        # no need to filter if proxy is good
-        # df = df[df.apply(lambda x: check_proxy(f"{x['IP Address']}:{x['Port']}"), axis=1)]
+        # # sort the 'VN' first
+        # df['Order'] = df['Code'].apply(lambda x: 0 if x == 'VN' else 1)
+        # df = df.sort_values(by='Order').drop('Order', axis=1)
+        # get only VN proxies
+        df = df[(df['Code'] == 'VN')]
     except Exception as e:
         logger.error(f"Failed to fetch proxy list: {e}")
         return pd.DataFrame()  # return an empty DataFrame or handle it as needed
     return df
-
-
-def check_proxy(proxy):
-    checkApi = 'http://icanhazip.com'
-    try:
-        response = requests.get(checkApi, proxies={'https': '{proxy}'}, timeout=TIMEOUT)
-        status = response.status_code
-        return status == 200
-    except Exception:
-        return False
 
 
 def add_to_bad_list(item):
