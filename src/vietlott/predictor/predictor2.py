@@ -36,10 +36,10 @@ class Predictor2():
         train_data = data[:int(0.8*len(data))]
         val_data = data[int(0.8*len(data)):]
         # Get the maximum value in the data
-        max_value = np.max(data)
+        max_value = int(np.max(data.values))
         
         # Get number of features from training data 
-        num_features = train_data.shape[1]
+        num_features = int(train_data.shape[1])
 
         # Create and compile model 
         model = self.create_model(num_features, max_value)
