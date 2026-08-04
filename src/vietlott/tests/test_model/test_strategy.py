@@ -61,6 +61,30 @@ def test_frequency_no_history_falls_back(df):
     _assert_valid_ticket(ticket)
 
 
+def test_frequency_probabilities_sum_to_one(df):
+    model = FrequencyStrategy(df, min_val=MIN_VAL, max_val=MAX_VAL)
+    probs = model.number_probabilities()
+    assert len(probs) == MAX_VAL - MIN_VAL + 1
+    assert abs(probs.sum() - 1.0) < 1e-9
+    assert (probs > 0).all()
+
+
+def test_frequency_uniformity_test(df):
+    model = FrequencyStrategy(df, min_val=MIN_VAL, max_val=MAX_VAL)
+    result = model.uniformity_test()
+    assert result["dof"] == MAX_VAL - MIN_VAL
+    assert result["chi_square"] >= 0
+    assert result["n_draws"] == len(df)
+
+
+def test_frequency_lookback_limits_history(df):
+    full = FrequencyStrategy(df, min_val=MIN_VAL, max_val=MAX_VAL)
+    windowed = FrequencyStrategy(df, min_val=MIN_VAL, max_val=MAX_VAL, lookback=2)
+    assert full.uniformity_test()["n_draws"] == len(df)
+    assert windowed.uniformity_test()["n_draws"] == 2
+
+
+
 def test_backtest_evaluate_revenue(df):
     model = RandomStrategy(df, min_val=MIN_VAL, max_val=MAX_VAL, time_predict=2)
     model.backtest()

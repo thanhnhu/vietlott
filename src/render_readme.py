@@ -195,13 +195,13 @@ auto crawl lottery data from [vietlott](https://vietlott.vn) daily, and predict 
 
 ### random 10 tickets of power 6/55
 
-strategy 1:
+strategy 1 (random baseline - backtest hits):
 {table_655_random.to_markdown(index=False)}
 
-strategy 2:
+strategy 2 (LSTM - Long Short-Term Memory neural network):
 {table_655_lstm.to_markdown(index=False)}
 
-strategy 3:
+strategy 3 (random forest):
 {table_655_random_forest.to_markdown(index=False)}
 
 strategy 4 (frequency-weighted):
@@ -212,10 +212,10 @@ strategy 4 (frequency-weighted):
 
 ### random 10 tickets of power 6/45
 
-strategy 1:
+strategy 1 (LSTM - Long Short-Term Memory neural network):
 {table_645_lstm.to_markdown(index=False)}
 
-strategy 2:
+strategy 2 (random forest):
 {table_645_random_forest.to_markdown(index=False)}
 
 strategy 3 (frequency-weighted):
