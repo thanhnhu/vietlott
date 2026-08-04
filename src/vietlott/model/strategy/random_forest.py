@@ -35,15 +35,18 @@ class RandomForestStrategy(BaseStrategy):
     def generate(self, date=None, n=1):
         from sklearn.ensemble import RandomForestRegressor
 
+        # learn a mapping ticket -> ticket from past draws (X and y are the same matrix)
         mat = self._matrix(date)
         model = RandomForestRegressor(n_estimators=self.n_estimators, random_state=None)
         model.fit(mat, mat)
 
+        # frequency-weighted tickets act as realistic inputs to feed the trained model
         seeder = FrequencyStrategy(self.df, min_val=self.min_val, max_val=self.max_val, shape=False)
         tickets = []
         for _ in range(n):
             seed = pd.DataFrame([seeder.predict(date)], columns=mat.columns)
             prediction = model.predict(seed)[0]
+            # round/clip/dedupe the regressor output into a valid ticket
             tickets.append(self._sanitize(prediction))
         return tickets
 

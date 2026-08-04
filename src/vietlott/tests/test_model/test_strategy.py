@@ -4,6 +4,8 @@ import pytest
 from vietlott.model.strategy.base import BaseStrategy
 from vietlott.model.strategy.random import RandomStrategy
 from vietlott.model.strategy.not_repeat import NotRepeatStrategy
+from vietlott.model.strategy.random_forest import RandomForestStrategy
+from vietlott.model.strategy.lstm import LSTMStrategy
 from vietlott.model.strategy.frequency import FrequencyStrategy
 
 MIN_VAL, MAX_VAL, SIZE = 1, 55, 6
@@ -46,6 +48,23 @@ def test_not_repeat_excludes_last_draw(df):
         ticket = model.predict("2021-01-11")  # after all draws
         _assert_valid_ticket(ticket)
         assert not (set(ticket) & last_main), "must avoid numbers from the most recent draw"
+
+
+def test_random_forest_generates_valid_tickets(df):
+    pytest.importorskip("sklearn")
+    model = RandomForestStrategy(df, min_val=MIN_VAL, max_val=MAX_VAL, n_estimators=10)
+    tickets = model.generate(n=3)
+    assert len(tickets) == 3
+    for ticket in tickets:
+        _assert_valid_ticket(ticket)
+
+
+def test_lstm_generates_valid_tickets(df):
+    pytest.importorskip("tensorflow")
+    model = LSTMStrategy(df, min_val=MIN_VAL, max_val=MAX_VAL, epochs=1)
+    tickets = model.generate(n=1)
+    assert len(tickets) == 1
+    _assert_valid_ticket(tickets[0])
 
 
 def test_frequency_valid_and_causal(df):

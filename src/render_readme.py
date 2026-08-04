@@ -125,6 +125,34 @@ def _tickets_table(label: str, factory, n: int) -> pd.DataFrame:
     return pd.DataFrame({"#": range(1, len(tickets) + 1), "Tickets": tickets})
 
 
+def _predictions_section(title: str, df: pd.DataFrame, cfg, n: int) -> str:
+    """render one product's predicted-ticket tables plus its latest results."""
+    bounds = dict(min_val=cfg.min_value, max_val=cfg.max_value)
+    random_tbl = _tickets_table(f"random {title}", lambda: RandomStrategy(df, **bounds), n)
+    lstm_tbl = _tickets_table(f"lstm {title}", lambda: LSTMStrategy(df, **bounds), n)
+    rf_tbl = _tickets_table(f"random forest {title}", lambda: RandomForestStrategy(df, **bounds), n)
+    freq_tbl = _tickets_table(f"frequency {title}", lambda: FrequencyStrategy(df, **bounds), n)
+    latest = df.drop(["page", "process_time"], axis=1).head(20).to_markdown(index=False)
+    return f"""## {title}
+
+### predicted tickets
+
+**strategy 1 - random baseline**
+{random_tbl.to_markdown(index=False)}
+
+**strategy 2 - LSTM (Long Short-Term Memory neural network)**
+{lstm_tbl.to_markdown(index=False)}
+
+**strategy 3 - random forest**
+{rf_tbl.to_markdown(index=False)}
+
+**strategy 4 - frequency-weighted**
+{freq_tbl.to_markdown(index=False)}
+
+### latest 20 results
+{latest}"""
+
+
 def main():
     df_655 = load_product("power_655")
     df_655["date"] = pd.to_datetime(df_655["date"]).dt.date
@@ -152,77 +180,23 @@ def main():
     ticket_per_days = 10
     cfg_655 = get_config("power_655")
     cfg_645 = get_config("power_645")
-    # strategy 1: uniform baseline, showing backtest hits (>=5 correct)
-    random_model = RandomStrategy(df_655, ticket_per_days)
-    random_model.backtest()
-    random_model.evaluate()
-    table_655_random = random_model.df_backtest_evaluate[random_model.df_backtest_evaluate["correct_num"] >= 5][["date", "result", "predicted"]]
-    # strategy 2: LSTM (optional ml extra)
-    table_655_lstm = _tickets_table(
-        "lstm 6/55", lambda: LSTMStrategy(df_655, min_val=cfg_655.min_value, max_val=cfg_655.max_value), 2
-    )
-    table_645_lstm = _tickets_table(
-        "lstm 6/45", lambda: LSTMStrategy(df_645, min_val=cfg_645.min_value, max_val=cfg_645.max_value), 2
-    )
-    # strategy 3: RandomForest (optional ml extra)
-    table_655_random_forest = _tickets_table(
-        "random_forest 6/55",
-        lambda: RandomForestStrategy(df_655, min_val=cfg_655.min_value, max_val=cfg_655.max_value),
-        ticket_per_days,
-    )
-    table_645_random_forest = _tickets_table(
-        "random_forest 6/45",
-        lambda: RandomForestStrategy(df_645, min_val=cfg_645.min_value, max_val=cfg_645.max_value),
-        ticket_per_days,
-    )
-    # strategy 4: frequency-weighted, shaped to historical distribution
-    table_655_frequency = _tickets_table(
-        "frequency 6/55",
-        lambda: FrequencyStrategy(df_655, min_val=cfg_655.min_value, max_val=cfg_655.max_value),
-        ticket_per_days,
-    )
-    table_645_frequency = _tickets_table(
-        "frequency 6/45",
-        lambda: FrequencyStrategy(df_645, min_val=cfg_645.min_value, max_val=cfg_645.max_value),
-        ticket_per_days,
-    )
+    section_655 = _predictions_section("Power 6/55", df_655, cfg_655, ticket_per_days)
+    section_645 = _predictions_section("Power 6/45", df_645, cfg_645, ticket_per_days)
 
     output_str = f"""# Vietlott
 
 auto crawl lottery data from [vietlott](https://vietlott.vn) daily, and predict tickets - it's a copy from [here](https://github.com/vietvudanh/vietlott-data)
 
-## Predictions (just for testing, not a financial advice)
+See [ARCHITECTURE.md](ARCHITECTURE.md) for how the project is structured (crawler, data adapter, strategies).
 
-### random 10 tickets of power 6/55
+## Predictions
 
-strategy 1 (random baseline - backtest hits):
-{table_655_random.to_markdown(index=False)}
+Sample tickets from several strategies. Lottery draws are independent and uniform, so none of these beat
+random in the long run - for testing only, not financial advice.
 
-strategy 2 (LSTM - Long Short-Term Memory neural network):
-{table_655_lstm.to_markdown(index=False)}
+{section_655}
 
-strategy 3 (random forest):
-{table_655_random_forest.to_markdown(index=False)}
-
-strategy 4 (frequency-weighted):
-{table_655_frequency.to_markdown(index=False)}
-
-## top 20 details power 6/55
-{df_655.drop(['page', 'process_time'], axis=1).head(20).to_markdown(index=False)}
-
-### random 10 tickets of power 6/45
-
-strategy 1 (LSTM - Long Short-Term Memory neural network):
-{table_645_lstm.to_markdown(index=False)}
-
-strategy 2 (random forest):
-{table_645_random_forest.to_markdown(index=False)}
-
-strategy 3 (frequency-weighted):
-{table_645_frequency.to_markdown(index=False)}
-
-## top 20 details power 6/45
-{df_645.drop(['page', 'process_time'], axis=1).head(20).to_markdown(index=False)}
+{section_645}
 
 <!---
 stats 6/55 all time - stats.to_markdown(index=False)

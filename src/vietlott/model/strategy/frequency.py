@@ -102,18 +102,21 @@ class FrequencyStrategy(BaseStrategy):
 
     def predict(self, date=None):
         history = self._history(date)
-        if not history:
+        if not history:  # no past draws yet: nothing to learn from, pick uniformly
             return sorted(random.sample(range(self.min_val, self.max_val + 1), self.number_predict))
 
+        # weight each number by how often it appeared (+ smoothing so none is impossible)
         counts = self._counts(history)
         population = list(range(self.min_val, self.max_val + 1))
         weights = [counts.get(n, 0) + self.smoothing for n in population]
 
+        # central bands of historical sum / odd-count, used to reject implausible tickets
         sum_band = self._band([sum(d) for d in history])
         odd_band = self._band([sum(1 for x in d if x % 2 == 1) for d in history])
 
         best = None
         for _ in range(self._max_retries):
+            # weighted draw without replacement -> one candidate ticket
             picked = set()
             pool, pool_w = population[:], weights[:]
             while len(picked) < self.number_predict:
@@ -124,7 +127,7 @@ class FrequencyStrategy(BaseStrategy):
                 picked.add(choice)
 
             ticket = sorted(picked)
-            best = ticket
+            best = ticket  # remember last candidate in case none passes the shape filter
             if self._passes(ticket, sum_band, odd_band):
                 return ticket
 

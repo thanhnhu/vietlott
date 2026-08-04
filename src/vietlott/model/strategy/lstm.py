@@ -36,6 +36,7 @@ class LSTMStrategy(BaseStrategy):
     def generate(self, date=None, n=1):
         from tensorflow import keras
 
+        # one row per past draw; 80/20 split for training vs. validation
         data = self._matrix(date)
         train_data = data[: int(0.8 * len(data))]
         val_data = data[int(0.8 * len(data)) :]
@@ -43,6 +44,7 @@ class LSTMStrategy(BaseStrategy):
         num_features = int(train_data.shape[1])
 
         model = self._build_model(num_features, max_value)
+        # stop once validation loss stops improving to avoid overfitting
         early_stopping = keras.callbacks.EarlyStopping(
             monitor="val_loss", patience=10, restore_best_weights=True, verbose=0
         )
@@ -55,6 +57,7 @@ class LSTMStrategy(BaseStrategy):
             verbose=0,
         )
 
+        # pick each row's highest-scored positions, then read back the actual numbers there
         predictions = model.predict(val_data, verbose=0)
         indices = np.argsort(predictions, axis=1)[:, -num_features:]
         picked = np.take_along_axis(val_data.to_numpy(), indices, axis=1)
@@ -67,7 +70,12 @@ class LSTMStrategy(BaseStrategy):
 if __name__ == "__main__":
     import os
 
+    # disable tensorflow warnings/messages
     os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
+    #os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+    #os.environ['PYCARET_CUSTOM_LOGGING_LEVEL'] = 'CRITICAL'
+    #os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
+
     from vietlott.datasource import load_product
 
     df = load_product("power_655")
