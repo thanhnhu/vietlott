@@ -22,11 +22,16 @@ from loguru import logger
 import threading
 
 
-bad_proxies = []
+bad_proxies = set()
 lock = threading.Lock()
 
+_proxies_cache = None
+_proxies_lock = threading.Lock()
+
+
 def get_vietlott_cookie() -> Tuple[str, dict]:
-    res = requests.get("https://vietlott.vn/ajaxpro/")
+    res = requests.get("https://vietlott.vn/ajaxpro/", timeout=TIMEOUT)
+    res.raise_for_status()
     match = re.search(r'document.cookie="(.*?)"', res.text)
     if match is None:
         raise ValueError(f"cookie is None, text={res.text}")
@@ -72,7 +77,8 @@ def fetch_wrapper(
 
             for index, row in proxies.iterrows():
                 str_proxy = f"{row['IP Address']}:{row['Port']}"
-                if str_proxy in bad_proxies: continue
+                if str_proxy in bad_proxies:
+                    continue
                 # print(f"proxy: {str_proxy}")
 
                 proxy = { "http": str_proxy, "https": str_proxy }
@@ -89,8 +95,8 @@ def fetch_wrapper(
                     )
 
                     if not res.ok:
-                        bannedMess = "You are unable to access"
-                        if bannedMess in res.text:
+                        banned_message = "You are unable to access"
+                        if banned_message in res.text:
                             logger.error(
                                 # f"req failed, args={task_data}, code={res.status_code}, headers={_headers}, params={params}, body={body}, res={res.text}, text={res.text[:200]}"
                                 f"req failed, args={task_data}, code={res.status_code}, proxy={str_proxy}, res='Banned IP!!!'"
@@ -124,24 +130,31 @@ def fetch_wrapper(
     return fetch
 
 
-def get_proxies():
-    try:
-        resp = requests.get('https://free-proxy-list.net/')
-        resp.raise_for_status()
-        df = pd.read_html(StringIO(resp.text))[0]
-        # df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
-        # # sort the 'VN' first
-        # df['Order'] = df['Code'].apply(lambda x: 0 if x == 'VN' else 1)
-        # df = df.sort_values(by='Order').drop('Order', axis=1)
-        # get only VN proxies
-        df = df[(df['Code'] == 'VN')]
-    except Exception as e:
-        logger.error(f"Failed to fetch proxy list: {e}")
-        return pd.DataFrame()  # return an empty DataFrame or handle it as needed
-    return df
+def get_proxies(force_refresh: bool = False):
+    # cache across workers so the proxy list is scraped once, not per fetch batch
+    global _proxies_cache
+    if _proxies_cache is not None and not force_refresh:
+        return _proxies_cache
+    with _proxies_lock:
+        if _proxies_cache is not None and not force_refresh:
+            return _proxies_cache
+        try:
+            resp = requests.get('https://free-proxy-list.net/', timeout=TIMEOUT)
+            resp.raise_for_status()
+            df = pd.read_html(StringIO(resp.text))[0]
+            # df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
+            # # sort the 'VN' first
+            # df['Order'] = df['Code'].apply(lambda x: 0 if x == 'VN' else 1)
+            # df = df.sort_values(by='Order').drop('Order', axis=1)
+            # get only VN proxies
+            df = df[(df['Code'] == 'VN')]
+        except Exception as e:
+            logger.error(f"Failed to fetch proxy list: {e}")
+            return pd.DataFrame()  # return an empty DataFrame or handle it as needed
+        _proxies_cache = df
+        return df
 
 
 def add_to_bad_list(item):
     with lock:
-        if item not in bad_proxies:
-            bad_proxies.append(item)
+        bad_proxies.add(item)
