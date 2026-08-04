@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-class PredictModel:
+class BaseStrategy:
     POWER_655_MIN_VAL = 1
     POWER_655_MAX_VAL = 55  # assume we are using power655
     number_predict = 6
@@ -43,8 +43,17 @@ class PredictModel:
         inter = l1_s.intersection(l2_s)
         return len(inter) == len(l1), len(inter)
 
+    def _history_before(self, date):
+        """main numbers (first ``number_predict`` per draw) strictly before ``date``."""
+        hist = self.df if date is None else self.df[self.df[self.col_date] < date]
+        return hist[self.col_result].apply(lambda r: r[: self.number_predict])
+
     def predict(self, date):
-        pass
+        raise NotImplementedError
+
+    def generate(self, date=None, n=1):
+        """generate ``n`` tickets for a given date (default: latest, using all data)."""
+        return [self.predict(date) for _ in range(n)]
 
     def backtest(self):
         _df = self.df.copy()
@@ -53,13 +62,14 @@ class PredictModel:
             predicted = []
             for i in range(self.time_predict):
                 loop_predict = self.predict(row.date)
-                correct, correct_num = self._compare_list(row.result, loop_predict)
+                main_numbers = row.result[: self.number_predict]
+                correct, correct_num = self._compare_list(main_numbers, loop_predict)
                 predicted.append(
                     {
-                        PredictModel.col_predict + "_idx": i,
-                        PredictModel.col_predict: loop_predict,
-                        PredictModel.col_correct: correct,
-                        PredictModel.col_correct_num: correct_num,
+                        self.col_predict + "_idx": i,
+                        self.col_predict: loop_predict,
+                        self.col_correct: correct,
+                        self.col_correct_num: correct_num,
                     }
                 )
 
@@ -69,22 +79,22 @@ class PredictModel:
         self.df_backtest = _df
 
     def evaluate(self):
-        self.df_backtest_explode = self.df_backtest.explode(PredictModel.col_predict_metadata)
+        self.df_backtest_explode = self.df_backtest.explode(self.col_predict_metadata)
         self.df_backtest_evaluate = pd.concat(
             [
                 self.df_backtest_explode.reset_index(drop=True),
-                pd.json_normalize(self.df_backtest_explode[PredictModel.col_predict_metadata]),
+                pd.json_normalize(self.df_backtest_explode[self.col_predict_metadata]),
             ],
             axis="columns",
         )
 
         return {
-            "correct_time": self.df_backtest_evaluate[PredictModel.col_correct].sum(),
-            "count_correct_num": self.df_backtest_evaluate.value_counts(PredictModel.col_correct_num),
+            "correct_time": self.df_backtest_evaluate[self.col_correct].sum(),
+            "count_correct_num": self.df_backtest_evaluate.value_counts(self.col_correct_num),
         }
 
     def revenue(self):
         cost = len(self.df_backtest_evaluate) * self.ticket_price
-        gain = self.df_backtest_evaluate[PredictModel.col_correct_num].apply(lambda v: self.prices.get(v, 0)).sum()
+        gain = self.df_backtest_evaluate[self.col_correct_num].apply(lambda v: self.prices.get(v, 0)).sum()
 
         return cost, gain, gain - cost

@@ -7,34 +7,38 @@ import pandas as pd
 from loguru import logger
 
 from vietlott.config.products import get_config
-from vietlott.model.strategy.random import RandomModel
-from vietlott.predictor.predictor import Predictor
-from vietlott.predictor.predictor2 import Predictor2
+from vietlott.datasource import load_product
+from vietlott.model.strategy.random import RandomStrategy
+from vietlott.model.strategy.frequency import FrequencyStrategy
+from vietlott.model.strategy.random_forest import RandomForestStrategy
+from vietlott.model.strategy.lstm import LSTMStrategy
 
-include_install_section = """# Install
- 
-## run locally
+include_install_section = """## Install
+
+### run locally
 
 ```shell
-# add PATH C:\\Users\\win\\.pyenv\\pyenv-win\\versions\\3.11.4\\Scripts\\
-$ pip install -r requirements.txt
-$ python src/vietlott/cli/crawl.py power_655
-$ python src/vietlott/cli/missing.py power_655
-$ python src/render_readme.py
-$ python src/vietlott/predictor/predictor.py
-$ python src/vietlott/predictor/predictor2.py
+pip install -r requirements.txt
+pip install -e .[ml]  # optional: enables RandomForest / LSTM strategies
+python src/vietlott/cli/crawl.py power_655
+python src/vietlott/cli/missing.py power_655
+python src/render_readme.py
+python src/vietlott/model/strategy/random_forest.py
+python src/vietlott/model/strategy/lstm.py
 ```
- 
-## via pip
+
+### via pip
 
 ```shell
 pip install -i https://test.pypi.org/simple/ vietlott-data==0.1.2
 ```
 
-## cli
+### cli
+
 project provides two cli
 
-### crawl
+#### crawl
+
 ```shell
 Usage: vietlott-crawl [OPTIONS] PRODUCT
 
@@ -51,7 +55,7 @@ Options:
   --help                Show this message and exit.
 ```
 
-### Backfill missing data
+#### Backfill missing data
 
 ```shell
 Usage: vietlott-missing [OPTIONS] PRODUCT
@@ -111,12 +115,22 @@ def read_data_str(data_dir: Path):
     return df
 
 
+def _tickets_table(label: str, factory, n: int) -> pd.DataFrame:
+    """build a '#/Tickets' table, degrading gracefully if optional ml deps are missing."""
+    try:
+        tickets = factory().generate(n=n)
+    except ImportError as exc:
+        logger.warning(f"skipping {label}: {exc}")
+        return pd.DataFrame({"Tickets": ["(requires optional 'ml' extra: pip install vietlott-data[ml])"]})
+    return pd.DataFrame({"#": range(1, len(tickets) + 1), "Tickets": tickets})
+
+
 def main():
-    df_655 = pd.read_json(get_config("power_655").raw_path, lines=True, dtype=object, convert_dates=False)
+    df_655 = load_product("power_655")
     df_655["date"] = pd.to_datetime(df_655["date"]).dt.date
     df_655 = df_655.sort_values(by=["date", "id"], ascending=False)
 
-    df_645 = pd.read_json(get_config("power_645").raw_path, lines=True, dtype=object, convert_dates=False)
+    df_645 = load_product("power_645")
     df_645["date"] = pd.to_datetime(df_645["date"]).dt.date
     df_645 = df_645.sort_values(by=["date", "id"], ascending=False)
 
@@ -136,41 +150,62 @@ def main():
 
     # predictions
     ticket_per_days = 10
-    # strategy 1
-    random_model = RandomModel(df_655, ticket_per_days)
+    cfg_655 = get_config("power_655")
+    cfg_645 = get_config("power_645")
+    # strategy 1: uniform baseline, showing backtest hits (>=5 correct)
+    random_model = RandomStrategy(df_655, ticket_per_days)
     random_model.backtest()
     random_model.evaluate()
-    df_655_predict_1 = random_model.df_backtest_evaluate[random_model.df_backtest_evaluate["correct_num"] >= 5][["date", "result", "predicted"]]
-    # strategy 2
-    df_655_predict_2 = Predictor2().predict(df_655, 2)
-    df_655_predict_2 = pd.DataFrame({'#': range(1, len(df_655_predict_2) + 1),
-                                      'Tickets': df_655_predict_2.values.tolist()})
+    table_655_random = random_model.df_backtest_evaluate[random_model.df_backtest_evaluate["correct_num"] >= 5][["date", "result", "predicted"]]
+    # strategy 2: LSTM (optional ml extra)
+    table_655_lstm = _tickets_table(
+        "lstm 6/55", lambda: LSTMStrategy(df_655, min_val=cfg_655.min_value, max_val=cfg_655.max_value), 2
+    )
+    table_645_lstm = _tickets_table(
+        "lstm 6/45", lambda: LSTMStrategy(df_645, min_val=cfg_645.min_value, max_val=cfg_645.max_value), 2
+    )
+    # strategy 3: RandomForest (optional ml extra)
+    table_655_random_forest = _tickets_table(
+        "random_forest 6/55",
+        lambda: RandomForestStrategy(df_655, min_val=cfg_655.min_value, max_val=cfg_655.max_value),
+        ticket_per_days,
+    )
+    table_645_random_forest = _tickets_table(
+        "random_forest 6/45",
+        lambda: RandomForestStrategy(df_645, min_val=cfg_645.min_value, max_val=cfg_645.max_value),
+        ticket_per_days,
+    )
+    # strategy 4: frequency-weighted, shaped to historical distribution
+    table_655_frequency = _tickets_table(
+        "frequency 6/55",
+        lambda: FrequencyStrategy(df_655, min_val=cfg_655.min_value, max_val=cfg_655.max_value),
+        ticket_per_days,
+    )
+    table_645_frequency = _tickets_table(
+        "frequency 6/45",
+        lambda: FrequencyStrategy(df_645, min_val=cfg_645.min_value, max_val=cfg_645.max_value),
+        ticket_per_days,
+    )
 
-    df_645_predict_2 = Predictor2().predict(df_645, 2)
-    df_645_predict_2 = pd.DataFrame({'#': range(1, len(df_645_predict_2) + 1),
-                                      'Tickets': df_645_predict_2.values.tolist()})
-    # strategy 3
-    df_655_predict_3 = Predictor().predict(df_655, ticket_per_days)
-    df_655_predict_3 = pd.DataFrame({'#': range(1, len(df_655_predict_3) + 1),
-                                      'Tickets': df_655_predict_3.values.tolist()})
+    output_str = f"""# Vietlott
 
-    df_645_predict_3 = Predictor().predict(df_645, ticket_per_days)
-    df_645_predict_3 = pd.DataFrame({'#': range(1, len(df_645_predict_3) + 1),
-                                      'Tickets': df_645_predict_3.values.tolist()})
-
-    output_str = f"""# Vietlot
 auto crawl lottery data from [vietlott](https://vietlott.vn) daily, and predict tickets - it's a copy from [here](https://github.com/vietvudanh/vietlott-data)
+
 ## Predictions (just for testing, not a financial advice)
+
 ### random 10 tickets of power 6/55
 
 strategy 1:
-{df_655_predict_1.to_markdown(index=False)}
+{table_655_random.to_markdown(index=False)}
 
 strategy 2:
-{df_655_predict_2.to_markdown(index=False)}
+{table_655_lstm.to_markdown(index=False)}
 
 strategy 3:
-{df_655_predict_3.to_markdown(index=False)}
+{table_655_random_forest.to_markdown(index=False)}
+
+strategy 4 (frequency-weighted):
+{table_655_frequency.to_markdown(index=False)}
 
 ## top 20 details power 6/55
 {df_655.drop(['page', 'process_time'], axis=1).head(20).to_markdown(index=False)}
@@ -178,10 +213,13 @@ strategy 3:
 ### random 10 tickets of power 6/45
 
 strategy 1:
-{df_645_predict_2.to_markdown(index=False)}
+{table_645_lstm.to_markdown(index=False)}
 
 strategy 2:
-{df_645_predict_3.to_markdown(index=False)}
+{table_645_random_forest.to_markdown(index=False)}
+
+strategy 3 (frequency-weighted):
+{table_645_frequency.to_markdown(index=False)}
 
 ## top 20 details power 6/45
 {df_645.drop(['page', 'process_time'], axis=1).head(20).to_markdown(index=False)}

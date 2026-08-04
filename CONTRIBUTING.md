@@ -1,4 +1,5 @@
-# Dev environment
-You can check [Makefile]() to see the basic flow to dev at local
+# Contributing
 
-# 
+## Dev environment
+
+See the [Makefile](Makefile) for the basic local dev flow (venv, lint, tests, build).

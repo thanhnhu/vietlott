@@ -1,11 +1,12 @@
-from vietlott.model.strategy.base import PredictModel
+import random
+
+from vietlott.model.strategy.base import BaseStrategy
 
 
-class RandomModel(PredictModel):
+class RandomStrategy(BaseStrategy):
+    """uniform baseline: pick ``number_predict`` distinct numbers in ``[min_val, max_val]``."""
+
     def predict(self, *args, **kwargs):
-        import random
-
-        nums = list(range(self.min_val, self.max_val))
+        nums = list(range(self.min_val, self.max_val + 1))
         random.shuffle(nums)
-
-        return nums[: PredictModel.number_predict]
+        return sorted(nums[: self.number_predict])
