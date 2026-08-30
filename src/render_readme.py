@@ -10,6 +10,7 @@ from vietlott.config.products import get_config
 from vietlott.datasource import load_product
 from vietlott.model.strategy.random import RandomStrategy
 from vietlott.model.strategy.frequency import FrequencyStrategy
+from vietlott.model.strategy.positional import PositionalStrategy
 from vietlott.model.strategy.random_forest import RandomForestStrategy
 from vietlott.model.strategy.lstm import LSTMStrategy
 
@@ -132,6 +133,18 @@ def _predictions_section(title: str, df: pd.DataFrame, cfg, n: int) -> str:
     lstm_tbl = _tickets_table(f"lstm {title}", lambda: LSTMStrategy(df, **bounds), n)
     rf_tbl = _tickets_table(f"random forest {title}", lambda: RandomForestStrategy(df, **bounds), n)
     freq_tbl = _tickets_table(f"frequency {title}", lambda: FrequencyStrategy(df, **bounds), n)
+    # strategy 5: per-position (order statistics), 3 tickets per underlying model
+    pos_freq = _tickets_table(
+        f"positional-frequency {title}", lambda: PositionalStrategy(df, column_model="frequency", **bounds), 3
+    )
+    pos_rf = _tickets_table(
+        f"positional-random-forest {title}",
+        lambda: PositionalStrategy(df, column_model="random_forest", **bounds),
+        3,
+    )
+    pos_lstm = _tickets_table(
+        f"positional-lstm {title}", lambda: PositionalStrategy(df, column_model="lstm", **bounds), 3
+    )
     latest = df.drop(["page", "process_time"], axis=1).head(20).to_markdown(index=False)
     return f"""## {title}
 
@@ -148,6 +161,17 @@ def _predictions_section(title: str, df: pd.DataFrame, cfg, n: int) -> str:
 
 **strategy 4 - frequency-weighted**
 {freq_tbl.to_markdown(index=False)}
+
+**strategy 5 - positional (per-number order statistics), 3 tickets per model**
+
+_frequency:
+{pos_freq.to_markdown(index=False)}
+
+_random forest:
+{pos_rf.to_markdown(index=False)}
+
+_LSTM:
+{pos_lstm.to_markdown(index=False)}
 
 ### latest 20 results
 {latest}"""

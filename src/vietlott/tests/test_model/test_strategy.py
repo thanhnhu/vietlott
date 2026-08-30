@@ -7,6 +7,7 @@ from vietlott.model.strategy.not_repeat import NotRepeatStrategy
 from vietlott.model.strategy.random_forest import RandomForestStrategy
 from vietlott.model.strategy.lstm import LSTMStrategy
 from vietlott.model.strategy.frequency import FrequencyStrategy
+from vietlott.model.strategy.positional import PositionalStrategy
 
 MIN_VAL, MAX_VAL, SIZE = 1, 55, 6
 
@@ -65,6 +66,31 @@ def test_lstm_generates_valid_tickets(df):
     tickets = model.generate(n=1)
     assert len(tickets) == 1
     _assert_valid_ticket(tickets[0])
+
+
+def test_positional_frequency_valid(df):
+    model = PositionalStrategy(df, min_val=MIN_VAL, max_val=MAX_VAL, column_model="frequency")
+    for ticket in model.generate(n=5):
+        _assert_valid_ticket(ticket)
+
+
+def test_positional_random_forest_valid(df):
+    pytest.importorskip("sklearn")
+    model = PositionalStrategy(df, min_val=MIN_VAL, max_val=MAX_VAL, column_model="random_forest", n_estimators=10)
+    for ticket in model.generate(n=3):
+        _assert_valid_ticket(ticket)
+
+
+def test_positional_lstm_valid_small_history(df):
+    # df is smaller than the window, so the lstm branch falls back without needing tensorflow
+    model = PositionalStrategy(df, min_val=MIN_VAL, max_val=MAX_VAL, column_model="lstm")
+    for ticket in model.generate(n=3):
+        _assert_valid_ticket(ticket)
+
+
+def test_positional_rejects_unknown_model(df):
+    with pytest.raises(ValueError, match="column_model"):
+        PositionalStrategy(df, min_val=MIN_VAL, max_val=MAX_VAL, column_model="svm")
 
 
 def test_frequency_valid_and_causal(df):
