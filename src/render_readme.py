@@ -164,13 +164,13 @@ def _predictions_section(title: str, df: pd.DataFrame, cfg, n: int) -> str:
 
 **strategy 5 - positional (per-number order statistics), 3 tickets per model**
 
-_frequency:
+_frequency_:
 {pos_freq.to_markdown(index=False)}
 
-_random forest:
+_random forest_:
 {pos_rf.to_markdown(index=False)}
 
-_LSTM:
+_LSTM_:
 {pos_lstm.to_markdown(index=False)}
 
 ### latest 20 results
