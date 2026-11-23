@@ -141,7 +141,12 @@ def get_proxies(force_refresh: bool = False):
         try:
             resp = requests.get('https://free-proxy-list.net/', timeout=TIMEOUT)
             resp.raise_for_status()
-            df = pd.read_html(StringIO(resp.text))[0]
+            # the page has several tables; pick the proxy list (the one with a country 'Code' column)
+            tables = pd.read_html(StringIO(resp.text))
+            df = next(t for t in tables if "Code" in t.columns)
+            # newer layout merges ip and port into a single 'IP:Port' column
+            if "IP Address" not in df.columns and "IP:Port" in df.columns:
+                df[["IP Address", "Port"]] = df["IP:Port"].str.split(":", n=1, expand=True)
             # df = df[(df['Anonymity'] == 'elite proxy') & (df['Https'] == 'yes') & (df['Code'] == 'VN')]
             # # sort the 'VN' first
             # df['Order'] = df['Code'].apply(lambda x: 0 if x == 'VN' else 1)
